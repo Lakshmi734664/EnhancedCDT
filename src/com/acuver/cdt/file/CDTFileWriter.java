@@ -11,23 +11,11 @@ public class CDTFileWriter {
 	
 	
 	public CDTFileWriter(String fileLocation,String fileName,String fileData){
-		
-		   String []directories = fileLocation.split("//");
-		 
-		 //Creating directory
-		   String directory = directories[0]+"//"+directories[1];
-		   createDirectory(directory);
-		   
-		   //Creating Sub - directory
-		   String subDirectory = directories[0]+"//"+directories[1]+"//"+directories[2];
-		   createDirectory(subDirectory);
-		   
 		   
 		   //Creating directory with timeStamp
-		   String directoryPath = directories[0]+"//"+directories[1]+"//"+directories[2]+"//";
+		   String directoryPath = fileLocation;
 		   
-		   
-			 
+
 		    String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
 		  
 		    String fullPath = directoryPath + timeStamp;
