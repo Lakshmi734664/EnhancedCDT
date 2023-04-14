@@ -42,14 +42,59 @@ public class EnhancedCDTMain {
 			String OUTPUT_DIR = prop.getProperty("OUTPUT_DIR");
 			System.out.println("OUTPUT_DIR: " + OUTPUT_DIR);
 			CDTFileReader fileReader = new CDTFileReader();
-			File[] filesList = fileReader.readFilesFromDir(CDT_COMPARE_REPORT1);
-			for (File file : filesList) {
-				System.out.println("The files in the CDT_COMPARE_REPORT1 folder are " + file.getName());
+			if (CDT_COMPARE_REPORT1 != null && !CDT_COMPARE_REPORT1.isEmpty()) {
+
+				File[] filesList = fileReader.readFilesFromDir(CDT_COMPARE_REPORT1);
+				for (File file : filesList) {
+					System.out.println("The files in the CDT_COMPARE_REPORT1 are " + file.getName());
+				}
 			}
-			CDTFileReader fileReader1 = new CDTFileReader();
-			File[] filesList1 = fileReader.readFilesFromDir(CDT_COMPARE_REPORT2);
-			for (File file : filesList1) {
-				System.out.println("The files in the CDT_COMPARE_REPORT2 are " + file.getName());
+			else {
+				System.out.println("you don't have the directory for CDT_COMPARE_REPORT1  please add that");
+			}
+
+			if (CDT_COMPARE_REPORT2 != null && !CDT_COMPARE_REPORT2.isEmpty()) {
+				CDTFileReader fileReader1 = new CDTFileReader();
+				File[] filesList1 = fileReader.readFilesFromDir(CDT_COMPARE_REPORT2);
+				for (File file : filesList1) {
+					System.out.println("The files in the CDT_COMPARE_REPORT2 are " + file.getName());
+				}
+			}
+			else {
+				System.out.println("you don't have the directory for CDT_COMPARE_REPORT2 please add that");
+			}
+			
+			if (CDT_EXPORT_XML1 != null && !CDT_EXPORT_XML1.isEmpty()) {
+
+				File[] filesList = fileReader.readFilesFromDir(CDT_EXPORT_XML1);
+				for (File file : filesList) {
+					System.out.println("The files in the CDT_EXPORT_XML1  are " + file.getName());
+				}
+			}
+			else {
+				System.out.println("you don't have the directory for CDT_EXPORT_XML1 please add that");
+			}
+			
+			if (CDT_EXPORT_XML2 != null && !CDT_EXPORT_XML2.isEmpty()) {
+
+				File[] filesList = fileReader.readFilesFromDir(CDT_EXPORT_XML2);
+				for (File file : filesList) {
+					System.out.println("The files in the CDT_EXPORT_XML2  are " + file.getName());
+				}
+			}
+			else {
+				System.out.println("you don't have the directory for CDT_EXPORT_XML1 please add that");
+			}
+
+
+			if (OUTPUT_DIR != null && !OUTPUT_DIR.isEmpty()) {
+				File[] filesList = fileReader.readFilesFromDir(OUTPUT_DIR);
+				for (File file : filesList) {
+					System.out.println("The files in the OUTPUT_DIR are " + file.getName());
+				}
+			}
+			else {
+				System.out.println("you don't have the directory for OUTPUT_DIR please add that");
 			}
 
 		} catch (IOException e) {
