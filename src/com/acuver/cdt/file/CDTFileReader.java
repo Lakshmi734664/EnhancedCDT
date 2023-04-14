@@ -6,7 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
-public class FileReader {
+public class CDTFileReader {
 
 	public Properties readPropertiesFile(String filePath) throws IOException {
 		FileInputStream fis = null;
