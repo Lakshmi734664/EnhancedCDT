@@ -41,21 +41,20 @@ public class EnhancedCDTMain {
 
 			String OUTPUT_DIR = prop.getProperty("OUTPUT_DIR");
 			System.out.println("OUTPUT_DIR: " + OUTPUT_DIR);
+			CDTFileReader fileReader = new CDTFileReader();
+			File[] filesList = fileReader.readFilesFromDir(CDT_COMPARE_REPORT1);
+			for (File file : filesList) {
+				System.out.println("The files in the CDT_COMPARE_REPORT1 folder are " + file.getName());
+			}
+			CDTFileReader fileReader1 = new CDTFileReader();
+			File[] filesList1 = fileReader.readFilesFromDir(CDT_COMPARE_REPORT2);
+			for (File file : filesList1) {
+				System.out.println("The files in the CDT_COMPARE_REPORT2 are " + file.getName());
+			}
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-
-		CDTFileReader fileReader = new CDTFileReader();
-		File[] filesList = fileReader.readFilesFromDir("D:\\innovation\\cdtcompare\\samples\\20230403154011");
-		for (File file : filesList) {
-			System.out.println("The files in the 20230403154011 folder are " + file.getName());
-		}
-		CDTFileReader fileReader1 = new CDTFileReader();
-		File[] filesList1 = fileReader.readFilesFromDir("D:\\innovation\\cdtcompare\\samples\\20230413162836");
-		for (File file : filesList1) {
-			System.out.println("The files in the 20230413162836 are " + file.getName());
 		}
 
 	}
