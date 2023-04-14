@@ -8,44 +8,36 @@ import java.util.Date;
 
 public class CDTFileWriter {
 	
-
-   public static void main(String[] args) {
-
-	   
-	   //Creating directory
-	   String directory = "D://Reports";
-	   createDirectory(directory);
-	   
-	   //Creating Sub - directory
-	   String subDirectory = "D://Reports//CDT";
-	   createDirectory(subDirectory);
-	   
-	   //Creating directory with timeStamp
-	   String directoryPath = "D://Reports//CDT//";
+	
+	
+	public CDTFileWriter(String fileLocation,String fileName,String fileData){
+		
+		   String []directories = fileLocation.split("//");
 		 
-	    String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-	  
-	    String fullPath = directoryPath + timeStamp;
-	    
-	    System.out.println(fullPath);
-	    createDirectory(fullPath);
-	    
-	    String fileData = "<Order  DocumentType=\"0001\"  EnterpriseCode=\"Matrix\"  >\r\n"
-	    		+ "<OrderHoldTypes>\r\n"
-	    		+ "<OrderHoldType HoldType=\"FRAUD_HOLD\"/>\r\n"
-	    		+ "</OrderHoldTypes>\r\n"
-	    		+ "\r\n"
-	    		+ "<OrderLines>\r\n"
-	    		+ "<OrderLine OrderedQty=\"1\" >\r\n"
-	    		+ "<Item ItemID=\"100013\" UnitCost=\"10.0\" UnitOfMeasure=\"EACH\"/>\r\n"
-	    		+ "</OrderLine>\r\n"
-	    		+ "</OrderLines>\r\n"
-	    		+ "<PersonInfoShipTo AddressLine1=\"234 Copley Place\" City=\"Boston\" Country=\"US\" DayPhone=\"\"  EMailID=\"\" FirstName=\"Lakshmi\" LastName=\"A\" MobilePhone=\"\"  State=\"MA\"  ZipCode=\"02116\"/>\r\n"
-	    		+ "<PersonInfoBillTo AddressLine1=\"234 Copley Place\" City=\"Boston\" Country=\"US\" DayPhone=\"\"  EMailID=\"\" FirstName=\"Lakshmi\" LastName=\"A\" MobilePhone=\"\"  State=\"MA\"  ZipCode=\"02116\"/>\r\n"
-	    		+ "</Order>\r\n"
-	    		+ " ";
-	    createXMLFile(fullPath, "test",fileData);
-  }
+		 //Creating directory
+		   String directory = directories[0]+"//"+directories[1];
+		   createDirectory(directory);
+		   
+		   //Creating Sub - directory
+		   String subDirectory = directories[0]+"//"+directories[1]+"//"+directories[2];
+		   createDirectory(subDirectory);
+		   
+		   
+		   //Creating directory with timeStamp
+		   String directoryPath = directories[0]+"//"+directories[1]+"//"+directories[2]+"//";
+		   
+		   
+			 
+		    String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+		  
+		    String fullPath = directoryPath + timeStamp;
+		    
+		    System.out.println(fullPath);
+		    createDirectory(fullPath);
+		    
+		    createXMLFile(fullPath, fileName ,fileData);
+		
+	}
    public static void createXMLFile(String fileLocation, String fileName, String fileData) {
        try {
            // Create a new file object with the specified file location and name
