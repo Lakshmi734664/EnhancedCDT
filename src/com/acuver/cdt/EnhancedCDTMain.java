@@ -44,6 +44,9 @@ public class EnhancedCDTMain {
 			if (CDT_REPORT_DIR1 != null && !CDT_REPORT_DIR1.isEmpty()) {
 
 				File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR1);
+				if (filesList == null) {
+					System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
+				}
 				if (filesList != null && filesList.length > 0) {
 					for (File f : filesList) {
 						if (f != null && f.length() > 0) {
@@ -66,10 +69,16 @@ public class EnhancedCDTMain {
 			String CDT_REPORT_DIR2 = prop.getProperty("CDT_REPORT_DIR2");
 			System.out.println("CDT_REPORT_DIR2: " + CDT_REPORT_DIR2);
 			if (CDT_REPORT_DIR2 != null && !CDT_REPORT_DIR2.isEmpty()) {
-				File[] filesList1 = fileReader.readFilesFromDir(CDT_REPORT_DIR2);
-				for (File file : filesList1) {
-					System.out.println("The files in the CDT_REPORT_DIR2 are " + file.getName());
+				File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR2);
+				if (filesList != null) {
+
+					for (File file : filesList) {
+						System.out.println("The files in the CDT_REPORT_DIR2 are " + file.getName());
+					}
+				} else {
+					System.out.println("No files found in directory: " + CDT_REPORT_DIR2);
 				}
+
 			} else {
 				helper.printMsg("You don't have the CDT_REPORT_DIR2 properties.Please add it.");
 				System.exit(1);
@@ -80,8 +89,13 @@ public class EnhancedCDTMain {
 			if (CDT_XMLS1 != null && !CDT_XMLS1.isEmpty()) {
 
 				File[] filesList = fileReader.readFilesFromDir(CDT_XMLS1);
-				for (File file : filesList) {
-					System.out.println("The files in the CDT_XMLS1  are " + file.getName());
+				if (filesList != null) {
+
+					for (File file : filesList) {
+						System.out.println("The files in the CDT_XMLS1 are " + file.getName());
+					}
+				} else {
+					System.out.println("No files found in directory: " + CDT_XMLS1);
 				}
 			} else {
 				helper.printMsg("You don't have the CDT_XMLS1 properties.Please add it.");
@@ -93,8 +107,14 @@ public class EnhancedCDTMain {
 			if (CDT_XMLS2 != null && !CDT_XMLS2.isEmpty()) {
 
 				File[] filesList = fileReader.readFilesFromDir(CDT_XMLS2);
-				for (File file : filesList) {
-					System.out.println("The files in the CDT_XMLS2  are " + file.getName());
+				if (filesList != null) {
+
+					for (File file : filesList) {
+						System.out.println("The files in the CDT_XMLS1 are " + file.getName());
+					}
+
+				} else {
+					System.out.println("No files found in directory: " + CDT_XMLS2);
 				}
 			} else {
 				helper.printMsg("You don't have the CDT_XMLS2 properties.Please add it.");
