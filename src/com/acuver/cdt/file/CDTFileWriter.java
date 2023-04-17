@@ -26,25 +26,37 @@ public class CDTFileWriter {
 		    createXMLFile(fullPath, fileName ,fileData);
 		
 	}
-   public static void createXMLFile(String fileLocation, String fileName, String fileData) {
-       try {
-           // Create a new file object with the specified file location and name
-           File file = new File(fileLocation + File.separator + fileName + ".xml");
-           
+   @SuppressWarnings("resource")
+public static void createXMLFile(String fileLocation, String fileName, String fileData) throws IllegalArgumentException {
        
-           // Create a new FileWriter object to write to the file
-           FileWriter writer = new FileWriter(file);
-
-           // Write the file data to the file
-           writer.write(fileData);
-
-           // Close the writer
-           writer.close();
-
-           System.out.println("File created successfully!");
-       } catch (IOException e) {
-           System.out.println("Error creating file: " + e.getMessage());
-       }
+           
+           
+           try {
+        	   if (fileData=="") {
+       	        throw new Exception("No file data given\r\n"	+ "Please give the filedata.");
+       	       }
+        	   else if (fileLocation=="") {
+        	        throw new Exception("File location is missing.");
+        	    }else if(fileName=="") {
+        	    	throw new Exception("Filename is missing.");
+        	    }else {
+        	    	// Create a new file object with the specified file location and name
+        	    	   
+        	           File file = new File(fileLocation + File.separator + fileName + ".xml");
+        	           
+        	           // Create a new FileWriter object to write to the file
+        	           FileWriter writer = new FileWriter(file);
+        	           
+        	           // Write the file data to the file
+          	    	 writer.write(fileData);
+          	    	  // Close the writer
+          	        writer.close();
+          	        System.out.println("File created successfully!");
+        	    }
+        	} catch (Exception e) {
+        	    System.out.println("Caught an exception: " + e.getMessage());
+        	}
+       
    }
    
 	  public static void createDirectory(String path) {
