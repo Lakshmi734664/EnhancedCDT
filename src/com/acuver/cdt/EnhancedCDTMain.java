@@ -19,8 +19,9 @@ public class EnhancedCDTMain {
 				helper.formPropertiesFileHelpMsg();
 				System.exit(1);
 			}
-			prop = CDTFileReader.readPropertiesFile(enhancedcdtfile.getPath());
+
 			CDTFileReader fileReader = new CDTFileReader();
+			prop = fileReader.readPropertiesFile(enhancedcdtfile.getPath());
 
 			System.out.println("Properties : " + "\n" + prop + "\n");
 
@@ -30,11 +31,12 @@ public class EnhancedCDTMain {
 			if (CDT_REPORT_DIR1 != null && !CDT_REPORT_DIR1.isEmpty()) {
 
 				File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR1);
+
 				for (File file : filesList) {
 					System.out.println("The files in the CDT_REPORT_DIR1 are " + file.getName());
 				}
 			} else {
-				helper.printMsg();
+				helper.printMsg("you don't have the CDT_REPORT_DIR1 properties please add that");
 				System.exit(1);
 			}
 
@@ -47,7 +49,7 @@ public class EnhancedCDTMain {
 					System.out.println("The files in the CDT_REPORT_DIR2 are " + file.getName());
 				}
 			} else {
-				helper.printMsg();
+				helper.printMsg("you don't have the CDT_REPORT_DIR2 properties please add that");
 				System.exit(1);
 			}
 
@@ -60,7 +62,7 @@ public class EnhancedCDTMain {
 					System.out.println("The files in the CDT_XMLS1  are " + file.getName());
 				}
 			} else {
-				helper.printMsg();
+				helper.printMsg("you don't have the CDT_XMLS1 properties please add that");
 				System.exit(1);
 			}
 
@@ -73,7 +75,7 @@ public class EnhancedCDTMain {
 					System.out.println("The files in the CDT_XMLS2  are " + file.getName());
 				}
 			} else {
-				helper.printMsg();
+				helper.printMsg("you don't have the CDT_XMLS2 properties please add that");
 				System.exit(1);
 			}
 
