@@ -1,14 +1,11 @@
 package com.acuver.cdt.xml;
 
 import java.io.File;
-import java.io.StringWriter;
 import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
@@ -23,7 +20,16 @@ import org.xmlunit.diff.Difference;
 
 public class CDTXmlComparator {
 
-	public void cleanCompareReport(File f) throws Exception {
+	Document outputDoc = null;
+	Document inputDoc = null;
+
+	TreeMap<Integer, String> uniqueInsertMap = new TreeMap<Integer, String>();
+	TreeMap<Integer, String> uniqueDeleteMap = new TreeMap<Integer, String>();
+
+	TreeMap<Integer, String> duplicateInsertMap = new TreeMap<Integer, String>();
+	TreeMap<Integer, String> duplicateDeleteMap = new TreeMap<Integer, String>();
+
+	public Document cleanCompareReport(File f) throws Exception {
 
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		// an instance of builder to parse the specified xml file
@@ -31,13 +37,37 @@ public class CDTXmlComparator {
 		db = dbf.newDocumentBuilder();
 		Document doc = null;
 		doc = db.parse(f);
-		toString(doc, "Input: ");
-		// doc.normalizeDocument();
+		inputDoc = doc;
+
+		Element root = doc.getDocumentElement();
+		String parentNodeName = root.getNodeName();
+
+		/* Create DOM Parser */
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder parser = factory.newDocumentBuilder(); // DOM Parser
+
+		// Create a new Output document
+		outputDoc = parser.newDocument();
+		Element parentElement = outputDoc.createElement(parentNodeName);
+		outputDoc.appendChild(parentElement);
+
+		// Processing Insert/Delete Tags
+		processInsertDeleteTags(doc);
+
+		// Adding Unique Elements To Output
+		addUniqueElementsToOutput();
+
+		return outputDoc;
+	}
+
+	// Processing Insert/Delete Tags
+	public void processInsertDeleteTags(Document doc) throws Exception {
+
 		XPath xPath = XPathFactory.newInstance().newXPath();
 		String expression = "//Insert";
 		NodeList nodeList = null;
 		nodeList = (NodeList) xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-
+		System.out.println("Insert nodeList Length()" + nodeList.getLength());
 		for (int itr = 0; itr < nodeList.getLength(); itr++) {
 			Node node = nodeList.item(itr);
 			System.out.println("\nNode Name :" + node.getNodeName());
@@ -73,46 +103,64 @@ public class CDTXmlComparator {
 							while (iter.hasNext()) {
 								System.out.println(iter.next().toString());
 							}
-							toString(doc, "Output: ");
+							String nodeName1 = node.getNodeName();
+							String nodeName2 = node2.getNodeName();
+							int nodeIndex1 = itr;
+							int nodeIndex2 = itr2;
+							uniqueInsertMap.put(nodeIndex1, nodeName1);
+							uniqueDeleteMap.put(nodeIndex2, nodeName2);
+
 						} else {
 							System.out.println("primary key issue");
 							String nodeName1 = node.getNodeName();
 							String nodeName2 = node2.getNodeName();
 							int nodeIndex1 = itr;
 							int nodeIndex2 = itr2;
-							processInsertDeleteTags(doc, nodeName1, nodeName2, nodeIndex1, nodeIndex2);
+							duplicateInsertMap.put(nodeIndex1, nodeName1);
+							duplicateDeleteMap.put(nodeIndex2, nodeName2);
 						}
 					}
 				}
 			}
 		}
-	}
-
-	// Processing Insert/Delete Tags
-	public void processInsertDeleteTags(Document doc, String nodeName1, String nodeName2, int nodeIndex1,
-			int nodeIndex2) throws Exception {
-
-		// Removing the Nodes with primary key issue from the Main Document Object
-
-		Element element1 = (Element) doc.getElementsByTagName(nodeName1).item(nodeIndex1);
-		// remove the specific node
-		element1.getParentNode().removeChild(element1);
-
-		Element element2 = (Element) doc.getElementsByTagName(nodeName2).item(nodeIndex2);
-		// remove the specific node
-		element2.getParentNode().removeChild(element2);
-		doc.normalizeDocument();
-		toString(doc, "Output: ");
 
 	}
 
-	// Convert Document object to String
-	private static void toString(Document newDoc, String Type) throws Exception {
-		DOMSource domSource = new DOMSource(newDoc);
-		Transformer transformer = TransformerFactory.newInstance().newTransformer();
-		StringWriter sw = new StringWriter();
-		StreamResult sr = new StreamResult(sw);
-		transformer.transform(domSource, sr);
-		System.out.println(Type + "\n" + sw.toString());
+	// Adding Unique Elements To Output Document
+	public void addUniqueElementsToOutput() {
+
+		System.out.println("uniqueInsertMap : " + uniqueInsertMap.keySet());
+		System.out.println("uniqueDeleteMap : " + uniqueDeleteMap.keySet());
+		System.out.println("duplicateInsertMap : " + duplicateInsertMap.keySet());
+		System.out.println("duplicateDeleteMap : " + duplicateDeleteMap.keySet());
+
+		if (uniqueInsertMap.size() > 0) {
+			for (Entry<Integer, String> m : uniqueInsertMap.entrySet()) {
+				Node element1 = inputDoc.getElementsByTagName(m.getValue()).item(m.getKey());
+				Node importedChild1 = outputDoc.importNode(element1, true);
+				if (duplicateInsertMap.size() == 0) {
+					outputDoc.getDocumentElement().appendChild(importedChild1);
+				} else {
+					if (!duplicateInsertMap.containsKey(m.getKey())) {
+						outputDoc.getDocumentElement().appendChild(importedChild1);
+					}
+				}
+			}
+		}
+		if (uniqueDeleteMap.size() > 0) {
+			for (Entry<Integer, String> m : uniqueDeleteMap.entrySet()) {
+				Node element2 = inputDoc.getElementsByTagName(m.getValue()).item(m.getKey());
+				Node importedChild2 = outputDoc.importNode(element2, true);
+				if (duplicateDeleteMap.size() == 0) {
+					outputDoc.getDocumentElement().appendChild(importedChild2);
+				} else {
+					if (!duplicateDeleteMap.containsKey(m.getKey())) {
+						outputDoc.getDocumentElement().appendChild(importedChild2);
+					}
+				}
+			}
+		}
+		outputDoc.normalizeDocument();
 	}
+
 }
