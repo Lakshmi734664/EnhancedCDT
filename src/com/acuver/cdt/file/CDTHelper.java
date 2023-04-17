@@ -2,9 +2,9 @@ package com.acuver.cdt.file;
 
 public class CDTHelper {
 
-	public void printMsg() {
-		String message = "properties does'nt exist please add that property";
-		System.out.println(message);
+	public void printMsg(String msg) {
+		
+		System.out.println(msg);
 	}
 
 	public void formPropertiesFileHelpMsg() {
@@ -16,6 +16,6 @@ public class CDTHelper {
 				+ "	YDKPREF1	    ydfprefs.xml (Optional)\r\n"
 				+ "        YDKPERF2	    ydfprefs.xml (Optional)\r\n"
 				+ "        OUTPUT_DIR 	    Output Folder (Optional)";
-		System.out.println(message);
+		printMsg(message);
 	}
 }
