@@ -116,9 +116,7 @@ public class CDTXmlComparator {
 							String nodeName2 = node2.getNodeName();
 							int nodeIndex1 = itr;
 							int nodeIndex2 = itr2;
-							if (nodeIndex1 > 0) {
-								duplicateInsertMap.put(nodeIndex1, nodeName1);
-							}
+							duplicateInsertMap.put(nodeIndex1, nodeName1);
 							duplicateDeleteMap.put(nodeIndex2, nodeName2);
 						}
 					}
