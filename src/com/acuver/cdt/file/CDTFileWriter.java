@@ -3,33 +3,45 @@ package com.acuver.cdt.file;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
 public class CDTFileWriter {
 	
 	
 	
-	public CDTFileWriter(String fileLocation,String fileName,String fileData){
+	public CDTFileWriter(String fileLocation,String fileName,String fileData) throws IllegalArgumentException, IOException{
 		   
 		   //Creating directory with timeStamp
-		   String directoryPath = fileLocation;
-		   
 
 		    String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
 		  
-		    String fullPath = directoryPath + timeStamp;
+		    String fullPath = fileLocation + timeStamp;
 		    
 		    System.out.println(fullPath);
+		    
 		    createDirectory(fullPath);
 		    
 		    createXMLFile(fullPath, fileName ,fileData);
 		
 	}
-   @SuppressWarnings("resource")
-public static void createXMLFile(String fileLocation, String fileName, String fileData) throws IllegalArgumentException {
+
+public static void createXMLFile(String fileLocation, String fileName, String fileData) throws IllegalArgumentException, IOException {
        
-           
+	   FileWriter writer = null;
            
            try {
         	   if (fileData=="") {
@@ -42,19 +54,25 @@ public static void createXMLFile(String fileLocation, String fileName, String fi
         	    }else {
         	    	// Create a new file object with the specified file location and name
         	    	   
-        	           File file = new File(fileLocation + File.separator + fileName + ".xml");
+        	           File file = new File(fileLocation + File.separator + fileName );
         	           
         	           // Create a new FileWriter object to write to the file
-        	           FileWriter writer = new FileWriter(file);
+        	            writer = new FileWriter(file);
         	           
         	           // Write the file data to the file
-          	    	 writer.write(fileData);
-          	    	  // Close the writer
-          	        writer.close();
+        	            
+        	           String fileData1 = printInProperFormat(fileData,3,true);
+          	    	 writer.write(fileData1);
+          	    	 
+          	    	 
+          	    	
           	        System.out.println("File created successfully!");
         	    }
         	} catch (Exception e) {
         	    System.out.println("Caught an exception: " + e.getMessage());
+        	}finally {
+        		  // Close the writer
+      	        writer.close();
         	}
        
    }
@@ -72,5 +90,26 @@ public static void createXMLFile(String fileLocation, String fileName, String fi
 		      }
 		    }
 		  }
+	  
+	  public static String printInProperFormat(String xmlString, int indent, boolean ignoreDeclaration) {
+
+		    try {
+		        InputSource src = new InputSource(new StringReader(xmlString));
+		        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(src);
+
+		        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		        transformerFactory.setAttribute("indent-number", indent);
+		        Transformer transformer = transformerFactory.newTransformer();
+		        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+		        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
+		        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+		        Writer out = new StringWriter();
+		        transformer.transform(new DOMSource(document), new StreamResult(out));
+		        return out.toString();
+		    } catch (Exception e) {
+		        throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
+		    }
+		}
 
 }

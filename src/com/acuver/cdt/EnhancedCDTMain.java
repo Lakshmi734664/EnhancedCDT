@@ -6,6 +6,7 @@ import java.io.StringWriter;
 import java.util.Properties;
 
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -16,11 +17,12 @@ import com.acuver.cdt.file.CDTFileReader;
 import com.acuver.cdt.file.CDTFileWriter;
 import com.acuver.cdt.file.CDTHelper;
 import com.acuver.cdt.xml.CDTXmlComparator;
+import com.acuver.cdt.xml.CDTXmlDifferenceEvaluator;
 
 public class EnhancedCDTMain {
 
 	public static Document outputDoc = null;
-
+    
 	public static void main(String args[]) throws Exception {
 
 		Properties prop = null;
@@ -54,6 +56,12 @@ public class EnhancedCDTMain {
 							CDTXmlComparator xmlComparator = new CDTXmlComparator();
 							try {
 								outputDoc = xmlComparator.cleanCompareReport(f);
+								
+								
+								fileWriterMethod(outputDoc,prop,f);
+								
+						  
+						        
 								toString(outputDoc, "Output Document for File Name : " + f.getName());
 							} catch (Exception e) {
 								e.printStackTrace();
@@ -124,19 +132,7 @@ public class EnhancedCDTMain {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		String fileData = "<Order  DocumentType=\"0001\"  EnterpriseCode=\"Matrix\"  >\r\n" + "<OrderHoldTypes>\r\n"
-				+ "<OrderHoldType HoldType=\"FRAUD_HOLD\"/>\r\n" + "</OrderHoldTypes>\r\n" + "\r\n" + "<OrderLines>\r\n"
-				+ "<OrderLine OrderedQty=\"1\" >\r\n"
-				+ "<Item ItemID=\"100013\" UnitCost=\"10.0\" UnitOfMeasure=\"EACH\"/>\r\n" + "</OrderLine>\r\n"
-				+ "</OrderLines>\r\n"
-				+ "<PersonInfoShipTo AddressLine1=\"234 Copley Place\" City=\"Boston\" Country=\"US\" DayPhone=\"\"  EMailID=\"\" FirstName=\"Lakshmi\" LastName=\"A\" MobilePhone=\"\"  State=\"MA\"  ZipCode=\"02116\"/>\r\n"
-				+ "<PersonInfoBillTo AddressLine1=\"234 Copley Place\" City=\"Boston\" Country=\"US\" DayPhone=\"\"  EMailID=\"\" FirstName=\"Lakshmi\" LastName=\"A\" MobilePhone=\"\"  State=\"MA\"  ZipCode=\"02116\"/>\r\n"
-				+ "</Order>\r\n" + " ";
-
-		String fileLocation = "D://Reports//CDT//";
-		String fileName = "test";
-		CDTFileWriter writer = new CDTFileWriter(fileLocation, fileName, fileData);
+		
 	}
 
 	private static void toString(Document newDoc, String Type) throws Exception {
@@ -146,5 +142,21 @@ public class EnhancedCDTMain {
 		StreamResult sr = new StreamResult(sw);
 		transformer.transform(domSource, sr);
 		System.out.println(Type + "\n" + sw.toString());
+	}
+	
+	private static void fileWriterMethod(Document outputDoc,Properties prop,File f) throws TransformerException, IllegalArgumentException, IOException {
+		DOMSource domSource = new DOMSource(outputDoc);
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        StringWriter sw = new StringWriter();
+        StreamResult sr = new StreamResult(sw);
+        transformer.transform(domSource, sr);
+        
+        String fileData = sw.toString();
+
+		String fileLocation = prop.getProperty("OUTPUT_DIR");
+		System.out.println("OUTPUT_DIR: " + fileLocation);
+      //  String fileLocation = "D://Reports//CDT//";
+		String fileName = f.getName();
+		CDTFileWriter writer = new CDTFileWriter(fileLocation, fileName, fileData);
 	}
 }
