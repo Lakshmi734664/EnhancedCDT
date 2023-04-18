@@ -47,7 +47,7 @@ public static void createXMLFile(String fileLocation, String fileName, String fi
         	   if (fileData=="") {
        	        throw new Exception("No file data given\r\n"	+ "Please give the filedata.");
        	       }
-        	   else if (fileLocation=="") {
+        	    if (fileLocation=="") {
         	        throw new Exception("File location is missing.");
         	    }else if(fileName=="") {
         	    	throw new Exception("Filename is missing.");
@@ -93,7 +93,7 @@ public static void createXMLFile(String fileLocation, String fileName, String fi
 	  
 	  public static String printInProperFormat(String xmlString, int indent, boolean ignoreDeclaration) {
 
-		    try {
+		   try {
 		        InputSource src = new InputSource(new StringReader(xmlString));
 		        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(src);
 
@@ -104,12 +104,23 @@ public static void createXMLFile(String fileLocation, String fileName, String fi
 		        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
 		        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-		        Writer out = new StringWriter();
-		        transformer.transform(new DOMSource(document), new StreamResult(out));
-		        return out.toString();
+		        StringWriter writer = new StringWriter();
+		        StreamResult result = new StreamResult(writer);
+		        DOMSource source = new DOMSource(document);
+
+		        if (!ignoreDeclaration) {
+		            // Remove the extra line by setting the transformer output property
+		            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "0");
+		        }
+		        
+		        transformer.transform(source, result);
+
+		        return writer.toString();
 		    } catch (Exception e) {
 		        throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
 		    }
 		}
+	  
+	
 
 }
