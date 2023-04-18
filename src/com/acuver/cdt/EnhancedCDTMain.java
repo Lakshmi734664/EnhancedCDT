@@ -153,7 +153,7 @@ public class EnhancedCDTMain {
         
         String fileData = sw.toString();
 
-		String fileLocation = prop.getProperty("OUTPUT_DIR");
+		final String fileLocation = prop.getProperty("OUTPUT_DIR");
 		System.out.println("OUTPUT_DIR: " + fileLocation);
       //  String fileLocation = "D://Reports//CDT//";
 		String fileName = f.getName();
