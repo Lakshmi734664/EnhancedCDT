@@ -47,7 +47,7 @@ public static void createXMLFile(String fileLocation, String fileName, String fi
         	   if (fileData=="") {
        	        throw new Exception("No file data given\r\n"	+ "Please give the filedata.");
        	       }
-        	    if (fileLocation=="") {
+        	   else if (fileLocation=="") {
         	        throw new Exception("File location is missing.");
         	    }else if(fileName=="") {
         	    	throw new Exception("Filename is missing.");
@@ -78,17 +78,23 @@ public static void createXMLFile(String fileLocation, String fileName, String fi
    }
    
 	  public static void createDirectory(String path) {
-		    File directory = new File(path);
+		  
+		  try {
+			  File directory = new File(path);
 
-		    // Create the directory if it doesn't exist
-		    if (!directory.exists()) {
-		      boolean success = directory.mkdirs();
-		      if (success) {
-		        System.out.println("Directory created successfully: " + path);
-		      } else {
-		        System.out.println("Failed to create directory: " + path);
-		      }
-		    }
+			    // Create the directory if it doesn't exist
+			    if (!directory.exists()) {
+			      boolean success = directory.mkdirs();
+			      if (success) {
+			        System.out.println("Directory created successfully: " + path);
+			      } else {
+			        System.out.println("Failed to create directory: " + path);
+			      }
+			    }
+		  }catch (Exception e) {
+      	    System.out.println("Caught an exception: " + e.getMessage());
+      	}
+		   
 		  }
 	  
 	  public static String printInProperFormat(String xmlString, int indent, boolean ignoreDeclaration) {
