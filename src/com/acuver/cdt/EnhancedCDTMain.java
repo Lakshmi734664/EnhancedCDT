@@ -22,12 +22,13 @@ import com.acuver.cdt.xml.CDTXmlDifferenceEvaluator;
 public class EnhancedCDTMain {
 
 	public static Document outputDoc = null;
-    
+	public static File enhancedcdtfile;
+	
 	public static void main(String args[]) throws Exception {
 
 		Properties prop = null;
 		try {
-			File enhancedcdtfile = new File("enhancedcdt.properties");
+			 enhancedcdtfile = new File("enhancedcdt.properties");
 			CDTHelper helper = new CDTHelper();
 			if (!enhancedcdtfile.exists()) {
 				// Display message and exit if config file does not exist
@@ -153,7 +154,10 @@ public class EnhancedCDTMain {
         
         String fileData = sw.toString();
 
-		final String fileLocation = prop.getProperty("OUTPUT_DIR");
+		 String location = prop.getProperty("OUTPUT_DIR");
+		 
+
+		final String fileLocation = location+ "//";
 		System.out.println("OUTPUT_DIR: " + fileLocation);
       //  String fileLocation = "D://Reports//CDT//";
 		String fileName = f.getName();
