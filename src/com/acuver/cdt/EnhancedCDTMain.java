@@ -17,18 +17,24 @@ import com.acuver.cdt.file.CDTFileReader;
 import com.acuver.cdt.file.CDTFileWriter;
 import com.acuver.cdt.file.CDTHelper;
 import com.acuver.cdt.xml.CDTXmlComparator;
-import com.acuver.cdt.xml.CDTXmlDifferenceEvaluator;
 
 public class EnhancedCDTMain {
 
 	public static Document outputDoc = null;
 	public static File enhancedcdtfile;
-	
+	public static String CDT_REPORT_DIR1;
+	public static String CDT_REPORT_DIR2;
+	public static String CDT_XMLS1;
+	public static String CDT_XMLS2;
+	public static String fileData;
+	public static String fileLocation;
+	public static String fileName;
+
 	public static void main(String args[]) throws Exception {
 
 		Properties prop = null;
 		try {
-			 enhancedcdtfile = new File("enhancedcdt.properties");
+			enhancedcdtfile = new File("enhancedcdt.properties");
 			CDTHelper helper = new CDTHelper();
 			if (!enhancedcdtfile.exists()) {
 				// Display message and exit if config file does not exist
@@ -41,7 +47,7 @@ public class EnhancedCDTMain {
 
 			System.out.println("Properties : " + "\n" + prop + "\n");
 
-			String CDT_REPORT_DIR1 = prop.getProperty("CDT_REPORT_DIR1");
+			CDT_REPORT_DIR1 = prop.getProperty("CDT_REPORT_DIR1");
 			System.out.println("CDT_REPORT_DIR1: " + CDT_REPORT_DIR1);
 
 			if (CDT_REPORT_DIR1 != null && !CDT_REPORT_DIR1.isEmpty()) {
@@ -57,12 +63,7 @@ public class EnhancedCDTMain {
 							CDTXmlComparator xmlComparator = new CDTXmlComparator();
 							try {
 								outputDoc = xmlComparator.cleanCompareReport(f);
-								
-								
-								fileWriterMethod(outputDoc,prop,f);
-								
-						  
-						        
+								fileWriterMethod(outputDoc, prop, f);
 								toString(outputDoc, "Output Document for File Name : " + f.getName());
 							} catch (Exception e) {
 								e.printStackTrace();
@@ -75,7 +76,7 @@ public class EnhancedCDTMain {
 				System.exit(1);
 			}
 
-			String CDT_REPORT_DIR2 = prop.getProperty("CDT_REPORT_DIR2");
+			CDT_REPORT_DIR2 = prop.getProperty("CDT_REPORT_DIR2");
 			System.out.println("CDT_REPORT_DIR2: " + CDT_REPORT_DIR2);
 			if (CDT_REPORT_DIR2 != null && !CDT_REPORT_DIR2.isEmpty()) {
 				File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR2);
@@ -93,7 +94,7 @@ public class EnhancedCDTMain {
 				System.exit(1);
 			}
 
-			String CDT_XMLS1 = prop.getProperty("CDT_XMLS1");
+			CDT_XMLS1 = prop.getProperty("CDT_XMLS1");
 			System.out.println("CDT_XMLS1: " + CDT_XMLS1);
 			if (CDT_XMLS1 != null && !CDT_XMLS1.isEmpty()) {
 
@@ -111,7 +112,7 @@ public class EnhancedCDTMain {
 				System.exit(1);
 			}
 
-			String CDT_XMLS2 = prop.getProperty("CDT_XMLS2");
+			CDT_XMLS2 = prop.getProperty("CDT_XMLS2");
 			System.out.println("CDT_XMLS2: " + CDT_XMLS2);
 			if (CDT_XMLS2 != null && !CDT_XMLS2.isEmpty()) {
 
@@ -133,7 +134,7 @@ public class EnhancedCDTMain {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	private static void toString(Document newDoc, String Type) throws Exception {
@@ -144,23 +145,23 @@ public class EnhancedCDTMain {
 		transformer.transform(domSource, sr);
 		System.out.println(Type + "\n" + sw.toString());
 	}
-	
-	private static void fileWriterMethod(Document outputDoc,Properties prop,File f) throws TransformerException, IllegalArgumentException, IOException {
+
+	private static void fileWriterMethod(Document outputDoc, Properties prop, File f)
+			throws TransformerException, IllegalArgumentException, IOException {
 		DOMSource domSource = new DOMSource(outputDoc);
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        StringWriter sw = new StringWriter();
-        StreamResult sr = new StreamResult(sw);
-        transformer.transform(domSource, sr);
-        
-        String fileData = sw.toString();
+		Transformer transformer = TransformerFactory.newInstance().newTransformer();
+		StringWriter sw = new StringWriter();
+		StreamResult sr = new StreamResult(sw);
+		transformer.transform(domSource, sr);
 
-		 String location = prop.getProperty("OUTPUT_DIR");
-		 
+		fileData = sw.toString();
 
-		final String fileLocation = location+ "//";
+		String location = prop.getProperty("OUTPUT_DIR");
+
+		fileLocation = location + "//";
 		System.out.println("OUTPUT_DIR: " + fileLocation);
-      //  String fileLocation = "D://Reports//CDT//";
-		String fileName = f.getName();
+		// String fileLocation = "D://Reports//CDT//";
+		fileName = f.getName();
 		CDTFileWriter writer = new CDTFileWriter(fileLocation, fileName, fileData);
 	}
 }
