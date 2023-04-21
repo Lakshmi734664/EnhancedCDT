@@ -9,6 +9,8 @@ import org.xmlunit.diff.DifferenceEvaluator;
 
 public class CDTXmlDifferenceEvaluator implements DifferenceEvaluator {
 
+	public static String primaryKeyName;
+	
 	@Override
 	public ComparisonResult evaluate(Comparison comparison, ComparisonResult outcome) {
 
@@ -16,7 +18,7 @@ public class CDTXmlDifferenceEvaluator implements DifferenceEvaluator {
 		case ATTR_VALUE:
 			Attr attr = (Attr) comparison.getControlDetails().getTarget();
 
-			if (attr.getName().endsWith("Key") || attr.getName().equalsIgnoreCase("Lockid")
+			if (attr.getName().equalsIgnoreCase(primaryKeyName ) || attr.getName().equalsIgnoreCase("Lockid")
 					|| attr.getName().equalsIgnoreCase("__ID__")) {
 				return ComparisonResult.EQUAL;
 			}
@@ -63,5 +65,16 @@ public class CDTXmlDifferenceEvaluator implements DifferenceEvaluator {
 		return outcome;
 
 	}
+	
+	//Get Primary Key Name
+	public String getPrimaryKeyName() {
+		return primaryKeyName;
+	}
+
+	//Set Primary Key Name
+	public void setPrimaryKeyName(String primaryKeyName) {
+		CDTXmlDifferenceEvaluator.primaryKeyName = primaryKeyName;
+	}
+	
 
 }

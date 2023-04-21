@@ -37,6 +37,8 @@ public class CDTXmlComparator {
 	ArrayList<String> UniqueDiffData = new ArrayList<String>();
 	TreeMap<Integer, ArrayList<String>> uniqueUpdateMap = new TreeMap<Integer, ArrayList<String>>();
 
+	String primaryKeyName;
+
 	public Document cleanCompareReport(File f) throws Exception {
 
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -48,7 +50,7 @@ public class CDTXmlComparator {
 		inputDoc = doc;
 		Element root = doc.getDocumentElement();
 		String parentNodeName = root.getNodeName();
-
+		System.out.println("parentNodeName : " + parentNodeName);
 		/* Create DOM Parser */
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder parser = factory.newDocumentBuilder(); // DOM Parser
@@ -57,6 +59,12 @@ public class CDTXmlComparator {
 		outputDoc = parser.newDocument();
 		Element parentElement = outputDoc.createElement(parentNodeName);
 		outputDoc.appendChild(parentElement);
+
+		// Getting The Table Primary Key Name
+		primaryKeyName = getTablePrimaryKeyName(parentNodeName);
+		System.out.println("primaryKeyName : " + primaryKeyName);
+		CDTXmlDifferenceEvaluator CDTXmlDifferenceEvaluator = new CDTXmlDifferenceEvaluator();
+		CDTXmlDifferenceEvaluator.setPrimaryKeyName(primaryKeyName);
 
 		// Processing Insert/Delete Tags
 		processInsertDeleteTags(doc);
@@ -73,6 +81,29 @@ public class CDTXmlComparator {
 		addUniqueElementsToUpdate();
 
 		return updateDoc;
+	}
+
+	// get Table Primary Key Name
+	public String getTablePrimaryKeyName(String tableName) {
+		int beginIndex = tableName.indexOf("YFS_");
+		String name = tableName.substring(beginIndex + 4).toLowerCase();
+		name = name.replace("_", " ");
+		System.out.println("name: " + name);
+		char[] charArray = name.toCharArray();
+		boolean foundSpace = true;
+		for (int i = 0; i < charArray.length; i++) {
+			if (Character.isLetter(charArray[i])) {
+				if (foundSpace) {
+					charArray[i] = Character.toUpperCase(charArray[i]);
+					foundSpace = false;
+				}
+			} else {
+				foundSpace = true;
+			}
+		}
+		String primaryKeyName = String.valueOf(charArray);
+		primaryKeyName = primaryKeyName.replaceAll("\\s", "") + "Key";
+		return primaryKeyName;
 	}
 
 	// Processing Insert/Delete Tags
@@ -114,7 +145,8 @@ public class CDTXmlComparator {
 
 						if (diff != null && diff.hasDifferences()) {
 							Iterator<Difference> iter = diff.getDifferences().iterator();
-
+							System.out.println(
+									"Delete Attribute name:" + node2.getAttributes().item(attrItr).getNodeValue());
 							while (iter.hasNext()) {
 								String datadifference = iter.next().toString();
 								if (datadifference != null && !datadifference.contains("xml version")) {
