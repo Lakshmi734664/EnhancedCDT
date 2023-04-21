@@ -6,7 +6,6 @@ import java.io.StringWriter;
 import java.util.Properties;
 
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -20,16 +19,13 @@ import com.acuver.cdt.xml.CDTXmlComparator;
 
 public class EnhancedCDTMain {
 
-	public static Document outputDoc = null;
+	public static  Document outputDoc = null;
 	public static File enhancedcdtfile;
 	public static String CDT_REPORT_DIR1;
 	public static String CDT_REPORT_DIR2;
 	public static String CDT_XMLS1;
 	public static String CDT_XMLS2;
-	public static String fileData;
-	public static String fileLocation;
-	public static String fileName;
-
+	
 	public static void main(String args[]) throws Exception {
 
 		Properties prop = null;
@@ -60,11 +56,11 @@ public class EnhancedCDTMain {
 					for (File f : filesList) {
 						if (f != null && f.length() > 0) {
 							System.out.println("The files in the CDT_REPORT_DIR1 are " + f.getName());
+							
 							CDTXmlComparator xmlComparator = new CDTXmlComparator();
 							try {
 								outputDoc = xmlComparator.cleanCompareReport(f);
 								fileWriterMethod(outputDoc, prop, f);
-								toString(outputDoc, "Output Document for File Name : " + f.getName());
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -134,34 +130,28 @@ public class EnhancedCDTMain {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
-
-	private static void toString(Document newDoc, String Type) throws Exception {
-		DOMSource domSource = new DOMSource(newDoc);
-		Transformer transformer = TransformerFactory.newInstance().newTransformer();
-		StringWriter sw = new StringWriter();
-		StreamResult sr = new StreamResult(sw);
-		transformer.transform(domSource, sr);
-		System.out.println(Type + "\n" + sw.toString());
-	}
-
-	private static void fileWriterMethod(Document outputDoc, Properties prop, File f)
-			throws TransformerException, IllegalArgumentException, IOException {
-		DOMSource domSource = new DOMSource(outputDoc);
-		Transformer transformer = TransformerFactory.newInstance().newTransformer();
-		StringWriter sw = new StringWriter();
-		StreamResult sr = new StreamResult(sw);
-		transformer.transform(domSource, sr);
-
-		fileData = sw.toString();
-
+	
+	public static void fileWriterMethod(Document outputDoc, Properties prop, File f)
+			throws Exception {
+		try {	
+		final String fileData = toString(outputDoc); 
 		String location = prop.getProperty("OUTPUT_DIR");
-
-		fileLocation = location + "//";
+		final String fileLocation = location + "//";
 		System.out.println("OUTPUT_DIR: " + fileLocation);
-		// String fileLocation = "D://Reports//CDT//";
-		fileName = f.getName();
+		final String fileName = f.getName();
 		CDTFileWriter writer = new CDTFileWriter(fileLocation, fileName, fileData);
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static String toString(Document document) throws Exception {	
+		TransformerFactory tf = TransformerFactory.newInstance();
+		Transformer t = tf.newTransformer();
+		StringWriter sw = new StringWriter();
+		t.transform(new DOMSource(document), new StreamResult(sw));
+		return sw.toString();
 	}
 }
