@@ -1,6 +1,7 @@
 package com.acuver.cdt.file;
 
 import java.io.File;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
@@ -16,23 +17,19 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
 public class CDTFileWriter {
-
-	public static String timeStamp;
-	public static String fullPath;
-	public static FileWriter writer = null;
-
+	
+	 public static FileWriter writer = null;
+	 public static  final String dateFormat = "yyyyMMddHHmmss";
+		// Creating directory with timeStamp
+	 public static  final String timeStamp = new SimpleDateFormat(dateFormat).format(new Date()) ; 
+	 
 	public CDTFileWriter(String fileLocation, String fileName, String fileData)
 			throws IllegalArgumentException, IOException {
 
-		// Creating directory with timeStamp
-
-		timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-
-		fullPath = fileLocation + timeStamp;
+		final String fullPath = fileLocation + timeStamp +"\\manual";
 
 		System.out.println(fullPath);
 
@@ -60,8 +57,7 @@ public class CDTFileWriter {
 				writer = new FileWriter(file);
 
 				// Write the file data to the file
-				String fileData1 = covertDocumentToString(fileData, 5, true);
-		
+				String fileData1 = covertDocumentToString(fileData);
 				writer.write(fileData1);
 
 				System.out.println("File created successfully!");
@@ -95,31 +91,32 @@ public class CDTFileWriter {
 	}
 	// input is document
 
-	public static String covertDocumentToString(String xmlString, int indent, boolean ignoreDeclaration) {
+	  public static String covertDocumentToString(String xmlString) throws Exception {
+		  try {
+		    // create a new transformer factory and set the formatting properties
+		    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		    transformerFactory.setAttribute("indent-number", 4);
 
-		try {
-			InputSource src = new InputSource(new StringReader(xmlString));
-			Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(src);
+		    // create a new transformer and set the formatting properties
+		    Transformer transformer = transformerFactory.newTransformer();
+		    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+		    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-			transformerFactory.setAttribute("indent-number", indent);
-			Transformer transformer = transformerFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		    // create a new DOM source from the XML string
+		    DOMSource source = new DOMSource(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new StringReader(xmlString))));
 
-			StringWriter writer = new StringWriter();
-			StreamResult result = new StreamResult(writer);
-			DOMSource source = new DOMSource(document);
+		    // create a new string writer to store the formatted XML
+		    StringWriter writer = new StringWriter();
 
-			if (!ignoreDeclaration) {
-				// Remove the extra line by setting the transformer output property
-				transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "0");
-			}
-			transformer.transform(source, result);
-			return writer.toString();
-		} catch (Exception e) {
+		    // transform the DOM source to a string writer with the transformer
+		    transformer.transform(source, new StreamResult(writer));
+
+		    // return the formatted XML as a string
+		    return writer.toString();
+		  } catch (Exception e)
+		  {
 			throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
-		}
-	}
+		   }
+	  }
+	
 }
