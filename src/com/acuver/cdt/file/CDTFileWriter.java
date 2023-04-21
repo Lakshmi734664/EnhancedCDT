@@ -9,6 +9,7 @@ import java.io.StringWriter;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -17,6 +18,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
 public class CDTFileWriter {
@@ -29,11 +31,13 @@ public class CDTFileWriter {
 	public CDTFileWriter(String fileLocation, String fileName, String fileData)
 			throws IllegalArgumentException, IOException {
 
-		final String fullPath = fileLocation + timeStamp +"\\manual";
+		final String fullPath = fileLocation + timeStamp;
 
 		System.out.println(fullPath);
 
 		createDirectory(fullPath);
+		
+		createDirectory(fullPath+"\\manual");
 
 		createXMLFile(fullPath, fileName, fileData);
 
@@ -57,7 +61,7 @@ public class CDTFileWriter {
 				writer = new FileWriter(file);
 
 				// Write the file data to the file
-				String fileData1 = covertDocumentToString(fileData);
+				String fileData1 = xmlFormatter(fileData);
 				writer.write(fileData1);
 
 				System.out.println("File created successfully!");
@@ -91,7 +95,7 @@ public class CDTFileWriter {
 	}
 	// input is document
 
-	  public static String covertDocumentToString(String xmlString) throws Exception {
+	  public static String xmlFormatter(String xmlString) throws Exception {
 		  try {
 		    // create a new transformer factory and set the formatting properties
 		    TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -118,5 +122,10 @@ public class CDTFileWriter {
 			throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
 		   }
 	  }
+	  
+		
+		
+
+	
 	
 }

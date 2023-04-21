@@ -135,7 +135,7 @@ public class EnhancedCDTMain {
 	public static void fileWriterMethod(Document outputDoc, Properties prop, File f)
 			throws Exception {
 		try {	
-		final String fileData = toString(outputDoc); 
+		final String fileData = convertDocumentToString(outputDoc); 
 		String location = prop.getProperty("OUTPUT_DIR");
 		final String fileLocation = location + "//";
 		System.out.println("OUTPUT_DIR: " + fileLocation);
@@ -147,7 +147,7 @@ public class EnhancedCDTMain {
 		}
 	}
 	
-	public static String toString(Document document) throws Exception {	
+	public static String convertDocumentToString(Document document) throws Exception {	
 		TransformerFactory tf = TransformerFactory.newInstance();
 		Transformer t = tf.newTransformer();
 		StringWriter sw = new StringWriter();
