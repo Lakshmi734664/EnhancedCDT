@@ -1,12 +1,15 @@
 package com.acuver.cdt.file;
 
+import java.io.BufferedReader;
 import java.io.File;
-
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
@@ -21,32 +24,80 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
+import com.acuver.cdt.EnhancedCDTMain;
+
 public class CDTFileWriter {
-	
-	 public static FileWriter writer = null;
-	 public static  final String dateFormat = "yyyyMMddHHmmss";
-		// Creating directory with timeStamp
-	 public static  final String timeStamp = new SimpleDateFormat(dateFormat).format(new Date()) ; 
-	 
-	public CDTFileWriter(String fileLocation, String fileName, String fileData)
-			throws IllegalArgumentException, IOException {
 
-		final String fullPath = fileLocation + timeStamp;
+	public static String fullPath;
 
-		System.out.println(fullPath);
+	public static String fileLocation;
 
-		createDirectory(fullPath);
-		
-		createDirectory(fullPath+"\\manual");
+	public CDTFileWriter(String fileName, String fileData) throws IllegalArgumentException, IOException {
 
 		createXMLFile(fullPath, fileName, fileData);
 
 	}
 
+	public static void findPathOfDirectory(String location) {
+		String dateFormat = "yyyyMMddHHmmss";
+
+		String timeStamp = new SimpleDateFormat(dateFormat).format(new Date());
+
+		if (location == null) {
+
+			try {
+				fileLocation = new java.io.File(".").getCanonicalPath();
+				fullPath = fileLocation + timeStamp;
+				createDirectory(fullPath);
+
+				createDirectory(fullPath + "\\manual");
+
+			} catch (IOException e) {
+
+				e.printStackTrace();
+			}
+
+		} else {
+
+			fileLocation = location + "//";
+
+			createDirectory(location);
+
+			fullPath = fileLocation + timeStamp;
+
+			createDirectory(fullPath);
+		}
+
+		System.out.println(fullPath);
+
+	}
+
+	public static void fileWriterMethod(Document outputDoc, Properties prop, File f) throws Exception {
+		try {
+
+			final String fileData = convertDocumentToString(outputDoc);
+			System.out.println("OUTPUT_DIR: " + fileLocation);
+			final String fileName = f.getName();
+			CDTFileWriter writer = new CDTFileWriter(fileName, fileData);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static String convertDocumentToString(Document document) throws Exception {
+		TransformerFactory tf = TransformerFactory.newInstance();
+		Transformer t = tf.newTransformer();
+		StringWriter sw = new StringWriter();
+		t.transform(new DOMSource(document), new StreamResult(sw));
+		return sw.toString();
+	}
+
 	public static void createXMLFile(String fileLocation, String fileName, String fileData)
 			throws IllegalArgumentException, IOException {
-
+		FileWriter writer = null;
 		try {
+
 			if (fileData == "") {
 				throw new Exception("No file data given\r\n" + "Please give the filedata.");
 			} else if (fileLocation == "") {
@@ -74,7 +125,7 @@ public class CDTFileWriter {
 		}
 
 	}
-	
+
 	public static void createDirectory(String path) {
 
 		try {
@@ -95,37 +146,50 @@ public class CDTFileWriter {
 	}
 	// input is document
 
-	  public static String xmlFormatter(String xmlString) throws Exception {
-		  try {
-		    // create a new transformer factory and set the formatting properties
-		    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-		    transformerFactory.setAttribute("indent-number", 4);
+	public static String xmlFormatter(String xmlString) throws Exception {
+		try {
+			// create a new transformer factory and set the formatting properties
+			TransformerFactory factory = TransformerFactory.newInstance();
+			factory.setAttribute("indent-number", 4);
 
-		    // create a new transformer and set the formatting properties
-		    Transformer transformer = transformerFactory.newTransformer();
-		    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-		    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			// create a new transformer and set the formatting properties
+			Transformer transformer = factory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-		    // create a new DOM source from the XML string
-		    DOMSource source = new DOMSource(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new StringReader(xmlString))));
+			// create a new DOM source from the XML string
+			DOMSource source = new DOMSource(DocumentBuilderFactory.newInstance().newDocumentBuilder()
+					.parse(new InputSource(new StringReader(xmlString))));
 
-		    // create a new string writer to store the formatted XML
-		    StringWriter writer = new StringWriter();
+			// create a new string writer to store the formatted XML
+			StringWriter writer = new StringWriter();
 
-		    // transform the DOM source to a string writer with the transformer
-		    transformer.transform(source, new StreamResult(writer));
+			// transform the DOM source to a string writer with the transformer
+			transformer.transform(source, new StreamResult(writer));
 
-		    // return the formatted XML as a string
-		    return writer.toString();
-		  } catch (Exception e)
-		  {
+			// return the formatted XML as a string
+			return writer.toString();
+		} catch (Exception e) {
 			throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
-		   }
-	  }
-	  
-		
-		
+		}
+	}
 
-	
-	
+	public static void copyFileToDirectory(File sourceFile, String destinationDirectory) throws IOException {
+		if (!sourceFile.exists()) {
+			throw new IllegalArgumentException("Source file " + sourceFile.getAbsolutePath() + " does not exist.");
+		}
+
+		if (!sourceFile.isFile()) {
+			throw new IllegalArgumentException("Source " + sourceFile.getAbsolutePath() + " is not a file.");
+		}
+
+		Path destinationDirPath = Paths.get(destinationDirectory);
+		if (!destinationDirPath.toFile().exists()) {
+			Files.createDirectories(destinationDirPath);
+		}
+
+		Path destinationPath = Paths.get(destinationDirectory, sourceFile.getName());
+		Files.copy(sourceFile.toPath(), destinationPath);
+	}
+
 }
