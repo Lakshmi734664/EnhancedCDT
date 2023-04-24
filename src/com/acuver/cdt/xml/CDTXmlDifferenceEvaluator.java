@@ -11,7 +11,7 @@ import com.acuver.cdt.constants.CDTConstants;
 
 public class CDTXmlDifferenceEvaluator implements DifferenceEvaluator {
 
-	public static String primaryKeyName;
+	public String primaryKeyName;
 	
 	@Override
 	public ComparisonResult evaluate(Comparison comparison, ComparisonResult outcome) {
@@ -64,8 +64,9 @@ public class CDTXmlDifferenceEvaluator implements DifferenceEvaluator {
 		if (outcome.equals(ComparisonResult.DIFFERENT)) {
 			outcome = outcome;
 		}
+		
 		return outcome;
-
+		
 	}
 	
 	//Get Primary Key Name
@@ -75,8 +76,7 @@ public class CDTXmlDifferenceEvaluator implements DifferenceEvaluator {
 
 	//Set Primary Key Name
 	public void setPrimaryKeyName(String primaryKeyName) {
-		CDTXmlDifferenceEvaluator.primaryKeyName = primaryKeyName;
+		this.primaryKeyName = primaryKeyName;
 	}
-	
 
 }
