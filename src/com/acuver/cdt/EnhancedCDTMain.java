@@ -4,6 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathFactory;
+
 import org.w3c.dom.Document;
 
 import com.acuver.cdt.file.CDTFileReader;
@@ -14,6 +18,10 @@ import com.acuver.cdt.xml.CDTXmlComparator;
 
 public class EnhancedCDTMain {
 
+	public static XPath xPath = XPathFactory.newInstance().newXPath();
+	/* Create DOM Parser */
+	public static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+	
 	public static void main(String args[]) throws Exception {
 
 		Document outputDoc = null;
