@@ -7,6 +7,8 @@ import org.xmlunit.diff.Comparison;
 import org.xmlunit.diff.ComparisonResult;
 import org.xmlunit.diff.DifferenceEvaluator;
 
+import com.acuver.cdt.constants.CDTConstants;
+
 public class CDTXmlDifferenceEvaluator implements DifferenceEvaluator {
 
 	public static String primaryKeyName;
@@ -18,8 +20,8 @@ public class CDTXmlDifferenceEvaluator implements DifferenceEvaluator {
 		case ATTR_VALUE:
 			Attr attr = (Attr) comparison.getControlDetails().getTarget();
 
-			if (attr.getName().equalsIgnoreCase(primaryKeyName ) || attr.getName().equalsIgnoreCase("Lockid")
-					|| attr.getName().equalsIgnoreCase("__ID__")) {
+			if (attr.getName().equalsIgnoreCase(primaryKeyName ) || attr.getName().equalsIgnoreCase(CDTConstants.LockID)
+					|| attr.getName().equalsIgnoreCase(CDTConstants.ID)) {
 				return ComparisonResult.EQUAL;
 			}
 			break;
@@ -33,7 +35,7 @@ public class CDTXmlDifferenceEvaluator implements DifferenceEvaluator {
 			if (comparison.getTestDetails().getValue() != null) {
 				testAttrName = ((QName) comparison.getTestDetails().getValue()).getLocalPart();
 			}
-			if (trgtAttrName.equalsIgnoreCase("Lockid") || testAttrName.equalsIgnoreCase("Lockid")) {
+			if (trgtAttrName.equalsIgnoreCase(CDTConstants.LockID) || testAttrName.equalsIgnoreCase(CDTConstants.LockID)) {
 				return ComparisonResult.EQUAL;
 			}
 			break;
@@ -47,7 +49,7 @@ public class CDTXmlDifferenceEvaluator implements DifferenceEvaluator {
 			if (comparison.getTestDetails().getValue() != null) {
 				testElemName = ((String) comparison.getTestDetails().getValue());
 			}
-			if (trgtElemName.equalsIgnoreCase("Insert") && testElemName.equalsIgnoreCase("Delete")) {
+			if (trgtElemName.equalsIgnoreCase(CDTConstants.INSERT) && testElemName.equalsIgnoreCase(CDTConstants.DELETE)) {
 				return ComparisonResult.EQUAL;
 			}
 			break;
