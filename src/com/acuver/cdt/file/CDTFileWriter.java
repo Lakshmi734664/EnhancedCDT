@@ -1,8 +1,6 @@
 package com.acuver.cdt.file;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
@@ -23,31 +21,32 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
-
-import com.acuver.cdt.EnhancedCDTMain;
+import com.acuver.cdt.constants.*;
 
 public class CDTFileWriter {
 
-	public static String fullPath;
-
-	public static String fileLocation;
-
-	public CDTFileWriter(String fileName, String fileData) throws IllegalArgumentException, IOException {
+	public CDTFileWriter(String fullPath, String fileName, String fileData)
+			throws IllegalArgumentException, IOException {
 
 		createXMLFile(fullPath, fileName, fileData);
 
 	}
 
-	public static void findPathOfDirectory(String location) {
-		String dateFormat = "yyyyMMddHHmmss";
+	public static String findPathOfDirectory(String location) {
 
-		String timeStamp = new SimpleDateFormat(dateFormat).format(new Date());
+		String fullPath = "";
+
+		String fileLocation = "";
+
+		String timeStamp = new SimpleDateFormat(CDTConstants.dateFormat).format(new Date());
 
 		if (location == null) {
 
 			try {
 				fileLocation = new java.io.File(".").getCanonicalPath();
-				fullPath = fileLocation + timeStamp;
+
+				fullPath = fileLocation + "//" + timeStamp;
+
 				createDirectory(fullPath);
 
 				createDirectory(fullPath + "\\manual");
@@ -65,21 +64,19 @@ public class CDTFileWriter {
 
 			fullPath = fileLocation + timeStamp;
 
-			createDirectory(fullPath);
+			createDirectory(fullPath + "\\manual");
 		}
 
-		System.out.println(fullPath);
-
+		return fullPath;
 	}
 
-	public static void fileWriterMethod(Document outputDoc, Properties prop, File f) throws Exception {
+	public static void fileWriterMethod(String fullPath, Document outputDoc, Properties prop, File f) throws Exception {
 		try {
 
 			final String fileData = convertDocumentToString(outputDoc);
-			System.out.println("OUTPUT_DIR: " + fileLocation);
 			final String fileName = f.getName();
-			CDTFileWriter writer = new CDTFileWriter(fileName, fileData);
-
+			CDTFileWriter writer = new CDTFileWriter(fullPath, fileName, fileData);
+			System.out.println("OUTPUT DIR:" + fullPath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

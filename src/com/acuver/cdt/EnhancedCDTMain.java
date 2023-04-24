@@ -8,148 +8,121 @@ import org.w3c.dom.Document;
 
 import com.acuver.cdt.file.CDTFileReader;
 import com.acuver.cdt.file.CDTFileWriter;
-import com.acuver.cdt.file.CDTHelper;
+
+import com.acuver.cdt.constants.*;
 import com.acuver.cdt.xml.CDTXmlComparator;
 
 public class EnhancedCDTMain {
 
-	public static Document outputDoc = null;
-
-	public static String CDT_REPORT_DIR1;
-	public static String CDT_REPORT_DIR2;
-	public static String CDT_XMLS1;
-	public static String CDT_XMLS2;
-	public static String OUTPUT_DIR;
-	public static String YDKPREF1;
-	public static String YDKPREF2;
-	public static Properties prop = null;
-
 	public static void main(String args[]) throws Exception {
 
+		Document outputDoc = null;
+		Properties prop = null;
 		try {
 
 			CDTFileReader fileReader = new CDTFileReader();
-			fileReader.readPropertiesFile1("enhancedcdt.properties");
+			prop = fileReader.readPropertiesFile1("enhancedcdt.properties");
 
 			CDTHelper helper = new CDTHelper();
-
+			String CDT_REPORT_DIR1 = prop.getProperty(CDTConstants.CDT_REPORT_DIR1);
 			System.out.println("CDT_REPORT_DIR1: " + CDT_REPORT_DIR1);
-			if (CDT_REPORT_DIR1 != null && !CDT_REPORT_DIR1.isEmpty()) {
 
-				try {
+			try {
 
-					File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR1);
-					if (filesList == null) {
-						System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
-					}
-					if (filesList != null && filesList.length > 0) {
-						for (File f : filesList) {
-							if (f != null && f.length() > 0) {
-								System.out.println("The files in the CDT_REPORT_DIR1 are " + f.getName());
+				File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR1);
+				if (filesList == null) {
+					System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
+				}
 
-								String name = f.getName();
+				String location = prop.getProperty("OUTPUT_DIR");
 
-								CDTXmlComparator xmlComparator = new CDTXmlComparator();
+				String fullPath = CDTFileWriter.findPathOfDirectory(location);
 
-								String location = prop.getProperty("OUTPUT_DIR");
-								CDTFileWriter.findPathOfDirectory(location);
+				if (filesList != null && filesList.length > 0) {
+					for (File f : filesList) {
+						if (f != null && f.length() > 0) {
+							System.out.println("The files in the CDT_REPORT_DIR1 are " + f.getName());
 
-								try {
+							String name = f.getName();
 
-									if (name.startsWith("YFS") || name.startsWith("PLT")) {
+							CDTXmlComparator xmlComparator = new CDTXmlComparator();
 
-										outputDoc = xmlComparator.cleanCompareReport(f);
-										CDTFileWriter.fileWriterMethod(outputDoc, prop, f);
-									} else {
+							try {
 
-										try {
-											CDTFileWriter.copyFileToDirectory(f, CDTFileWriter.fullPath);
-										} catch (IOException e) {
-											System.out.println("An error occurred while copying the file.");
-											e.printStackTrace();
-										}
+								if (name.startsWith("YFS") || name.startsWith("PLT")) {
+
+									outputDoc = xmlComparator.cleanCompareReport(f);
+									CDTFileWriter.fileWriterMethod(fullPath, outputDoc, prop, f);
+								} else {
+
+									try {
+
+										CDTFileWriter.copyFileToDirectory(f, fullPath);
+									} catch (IOException e) {
+										System.out.println("An error occurred while copying the file.");
+										e.printStackTrace();
 									}
-								} catch (Exception e) {
-									e.printStackTrace();
 								}
-
+							} catch (Exception e) {
+								e.printStackTrace();
 							}
+
 						}
 					}
-				} catch (SecurityException e) {
-					e.printStackTrace();
 				}
-
-			} else {
-				helper.formPropertiesFileHelpMsg();
-				System.exit(1);
+			} catch (SecurityException e) {
+				e.printStackTrace();
 			}
-
+			String CDT_REPORT_DIR2 = prop.getProperty(CDTConstants.CDT_REPORT_DIR2);
 			System.out.println("CDT_REPORT_DIR2: " + CDT_REPORT_DIR2);
-			if (CDT_REPORT_DIR2 != null && !CDT_REPORT_DIR2.isEmpty()) {
+			try {
 
-				try {
+				File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR2);
+				if (filesList != null) {
 
-					File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR2);
-					if (filesList != null) {
-
-						for (File file : filesList) {
-							System.out.println("The files in the CDT_REPORT_DIR2 are " + file.getName());
-						}
-					} else {
-						System.out.println("No files found in directory: " + CDT_REPORT_DIR2);
+					for (File file : filesList) {
+						System.out.println("The files in the CDT_REPORT_DIR2 are " + file.getName());
 					}
-
-				} catch (SecurityException e) {
-					e.printStackTrace();
+				} else {
+					System.out.println("No files found in directory: " + CDT_REPORT_DIR2);
 				}
 
-			} else {
-				helper.printMsg("You don't have the CDT_REPORT_DIR2 properties.Please add it.");
-				System.exit(1);
+			} catch (SecurityException e) {
+				e.printStackTrace();
 			}
 
-			System.out.println("CDT_XMLS1: " + CDT_XMLS1);
-			if (CDT_XMLS1 != null && !CDT_XMLS1.isEmpty()) {
+			String CDT_XMLS1 = prop.getProperty(CDTConstants.CDT_XMLS1);
+			System.out.println("CDT_XMLS1: " + CDTConstants.CDT_XMLS1);
 
-				try {
-					File[] filesList = fileReader.readFilesFromDir(CDT_XMLS1);
-					if (filesList != null) {
+			try {
+				File[] filesList = fileReader.readFilesFromDir(CDT_XMLS1);
+				if (filesList != null) {
 
-						for (File file : filesList) {
-							System.out.println("The files in the CDT_XMLS1 are " + file.getName());
-						}
-					} else {
-						System.out.println("No files found in directory: " + CDT_XMLS1);
+					for (File file : filesList) {
+						System.out.println("The files in the CDT_XMLS1 are " + file.getName());
 					}
-				} catch (SecurityException e) {
-					e.printStackTrace();
+				} else {
+					System.out.println("No files found in directory: " + CDT_XMLS1);
 				}
-			} else {
-				helper.formPropertiesFileHelpMsg();
-				System.exit(1);
+			} catch (SecurityException e) {
+				e.printStackTrace();
 			}
-
+			String CDT_XMLS2 = prop.getProperty(CDTConstants.CDT_XMLS2);
 			System.out.println("CDT_XMLS2: " + CDT_XMLS2);
-			if (CDT_XMLS2 != null && !CDT_XMLS2.isEmpty()) {
 
-				try {
-					File[] filesList = fileReader.readFilesFromDir(CDT_XMLS2);
-					if (filesList != null) {
+			try {
+				File[] filesList = fileReader.readFilesFromDir(CDT_XMLS2);
+				if (filesList != null) {
 
-						for (File file : filesList) {
-							System.out.println("The files in the CDT_XMLS1 are " + file.getName());
-						}
-
-					} else {
-						System.out.println("No files found in directory: " + CDT_XMLS2);
+					for (File file : filesList) {
+						System.out.println("The files in the CDT_XMLS1 are " + file.getName());
 					}
-				} catch (SecurityException e) {
-					e.printStackTrace();
+
+				} else {
+					System.out.println("No files found in directory: " + CDT_XMLS2);
 				}
-			} else {
-				helper.formPropertiesFileHelpMsg();
-				System.exit(1);
+			} catch (SecurityException e) {
+				e.printStackTrace();
 			}
 
 		} catch (IOException e) {

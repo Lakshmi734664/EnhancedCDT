@@ -9,11 +9,11 @@ public class CDTConstants {
 	public static final String YDKPREF1 = "YDKPREF1";
 	public static final String YDKPREF2 = "YDKPREF2";
 	public static final String LockID = "Lockid";
-    public static final String dateFormat = "yyyyMMddHHmmss";
-    public static final String INSERT = "Insert";
-    public static final String DELETE = "Delete";
-    public static final String UPDATE = "Update";
-    public static final String OLDVALUES = "OldValues";
-    public static final String ID = "__ID__";
-    
+	public static final String dateFormat = "yyyyMMddHHmmss";
+	public static final String INSERT = "Insert";
+	public static final String DELETE = "Delete";
+	public static final String UPDATE = "Update";
+	public static final String OLDVALUES = "OldValues";
+	public static final String ID = "__ID__";
+
 }
