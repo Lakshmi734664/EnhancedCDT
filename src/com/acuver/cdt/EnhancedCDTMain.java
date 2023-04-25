@@ -21,7 +21,7 @@ public class EnhancedCDTMain {
 	public static XPath xPath = XPathFactory.newInstance().newXPath();
 	/* Create DOM Parser */
 	public static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	
+
 	public static void main(String args[]) throws Exception {
 
 		Document outputDoc = null;
@@ -31,7 +31,6 @@ public class EnhancedCDTMain {
 			CDTFileReader fileReader = new CDTFileReader();
 			prop = fileReader.readPropertiesFile1("enhancedcdt.properties");
 
-			CDTHelper helper = new CDTHelper();
 			String CDT_REPORT_DIR1 = prop.getProperty(CDTConstants.CDT_REPORT_DIR1);
 			System.out.println("CDT_REPORT_DIR1: " + CDT_REPORT_DIR1);
 
@@ -42,7 +41,7 @@ public class EnhancedCDTMain {
 					System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
 				}
 
-				String location = prop.getProperty("OUTPUT_DIR");
+				String location = prop.getProperty(CDTConstants.OUTPUT_DIR);
 
 				String fullPath = CDTFileWriter.findPathOfDirectory(location);
 
