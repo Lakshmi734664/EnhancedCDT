@@ -42,6 +42,10 @@ public class CDTXmlComparator {
 
 	TreeMap<Integer, ArrayList<String>> subXmlDiffDataMap = new TreeMap<Integer, ArrayList<String>>();
 	TreeMap<Integer, Node> duplicateSubXmlDiffDataMap = new TreeMap<Integer, Node>();
+	
+	ArrayList<String> mergeInsertDataList = new ArrayList<String>();
+	TreeMap<Integer, ArrayList<String>> mergeInsertDataMap = new TreeMap<Integer, ArrayList<String>>();
+
 
 	TreeMap<Integer, ArrayList<String>> uniqueDiffDataMap = new TreeMap<Integer, ArrayList<String>>();
 
@@ -90,6 +94,7 @@ public class CDTXmlComparator {
 		processedUpdateEnhancedCompareDoc = addEnhancedCompareToUpdates(processedUpdateDoc);
 
 		outputDoc = processedUpdateEnhancedCompareDoc;
+		
 
 		return outputDoc;
 	}
@@ -202,13 +207,180 @@ public class CDTXmlComparator {
 	// Merge Insert/Delete To Update Doc
 	public Document mergeInsertDeleteToUpdate(Document doc) throws Exception {
 
-		return doc;
+		String expression = "//" + CDTConstants.INSERT;
+		NodeList nodeList = null;
+		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
+		System.out.println("Insert nodeList Length()" + nodeList.getLength());
+		for (int itr = 0; itr < nodeList.getLength(); itr++) {
+			Node insertNode = nodeList.item(itr);
+
+			// Getting Deletes from Insert.
+			NodeList deleteNodeList = getDeletesForInsert(doc, insertNode);
+
+			System.out.println("deleteNodeList length " + deleteNodeList.getLength());
+			for (int itr2 = 0; itr2 < deleteNodeList.getLength(); itr2++) {
+				Node deleteNode = deleteNodeList.item(itr2);
+				int insertNodeIndex = itr;
+				int deleteNodeIndex = itr2;
+				String insertNodeName = insertNode.getNodeName();
+				System.out.println("Comparing insertNode with deleteNode : ");
+
+				Diff diff = DiffBuilder.compare(insertNode).withTest(deleteNode).checkForSimilar().ignoreComments()
+						.ignoreWhitespace().ignoreElementContentWhitespace().normalizeWhitespace()
+						.withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
+
+				if (diff.hasDifferences()) {
+					Iterator<Difference> iter = diff.getDifferences().iterator();
+
+					while (iter.hasNext()) {
+						String datadifference = iter.next().toString();
+						System.out.println(datadifference);
+						if (datadifference != null && !datadifference.contains("xml version")) {
+							mergeInsertDataList.add(datadifference);
+						}
+					}
+					int nodeIndex1 = itr;
+
+					mergeInsertDataMap.put(nodeIndex1, mergeInsertDataList);
+
+				} else {
+
+					System.out.println(
+							"No Difference In insertNode and deleteNode.Both Insert and Delete Nodes are removed.");
+				}
+			}
+		}
+		addMergeInsertToUpdateDoc();
+
+		if (updateDoc != null) {
+			NodeList childNodes = updateDoc.getDocumentElement().getChildNodes();
+			for (int i = 0; i < childNodes.getLength(); i++) {
+				Node childNode = childNodes.item(i);
+				if (childNode.getNodeName().equals("Delete")) {
+					updateDoc.getDocumentElement().removeChild(childNode);
+				} else if (childNode.getNodeName().equals("Insert")) {
+
+					// Create a new "Update" element with the same attributes as the "Insert"
+
+					updateDoc.getDocumentElement().removeChild(childNode);
+					Element updateElement = updateDoc.createElement("Update");
+
+					NamedNodeMap attributes = childNode.getAttributes();
+
+					for (int j = 0; j < attributes.getLength(); j++) {
+						Node attribute = attributes.item(j);
+						updateElement.setAttribute(attribute.getNodeName(), attribute.getNodeValue());
+					}
+					Element oldValues = (Element) ((Element) childNode).getElementsByTagName("OldValues").item(0);
+
+					// Create a new "OldValues" element in the "Update" element with the same
+					if (oldValues != null) {
+						Element oldValuesElement = updateDoc.createElement("OldValues");
+						NamedNodeMap oldValuesAttributes = oldValues.getAttributes();
+						for (int j = 0; j < oldValuesAttributes.getLength(); j++) {
+							Node oldValuesAttribute = oldValuesAttributes.item(j);
+							oldValuesElement.setAttribute(oldValuesAttribute.getNodeName(),
+									oldValuesAttribute.getNodeValue());
+						}
+						updateElement.appendChild(oldValuesElement);
+					}
+					updateDoc.getDocumentElement().appendChild(updateElement);
+				}
+
+			}
+		}
+		return updateDoc;
+
 	}
+	
+	public void addMergeInsertToUpdateDoc() {
+
+		if (mergeInsertDataMap.size() > 0) {
+			for (Entry<Integer, ArrayList<String>> n : mergeInsertDataMap.entrySet()) {
+				Node insertNode = inputDoc.getElementsByTagName(CDTConstants.INSERT).item(n.getKey());
+
+				Element oldAttrEle = inputDoc.createElement("OldValues");
+
+				ArrayList<String> valuesList = n.getValue();
+				for (int i = 0; i < valuesList.size(); i++) {
+					String diffValues = valuesList.get(i);
+					System.out.println("diffValues in mergeInsertDataMap : " + diffValues);
+					int beginIndex = diffValues.indexOf("@") + 1;
+					int endIndex = diffValues.indexOf("to");
+					String attrName = diffValues.substring(beginIndex, endIndex).trim();
+					System.out.println("UpdateAttrName :" + attrName);
+					int oldBeginIndex = diffValues.indexOf("but was '") + 9;
+					int oldEndIndex = diffValues.indexOf("- comparing") - 2;
+					String oldAttrValue = diffValues.substring(oldBeginIndex, oldEndIndex).trim();
+					oldAttrEle.setAttribute(attrName, oldAttrValue);
+				}
+
+				insertNode.appendChild(oldAttrEle);
+			}
+			inputDoc.normalizeDocument();
+			updateDoc = inputDoc;
+		}
+
+	}
+
 
 	// Remove False Update
 	public Document removeFalseUpdates(Document doc) throws Exception {
 
-		return doc;
+		String expression = "//" + CDTConstants.UPDATE + "//" + CDTConstants.OLDVALUES;
+		NodeList nodeList = null;
+		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
+		System.out.println("Old Values nodeList Length()" + nodeList.getLength());
+		for (int itr = 0; itr < nodeList.getLength(); itr++) {
+			Node oldValueNode = nodeList.item(itr);
+			System.out.println("\nNode Name :" + oldValueNode.getNodeName());
+			NamedNodeMap attrList = oldValueNode.getAttributes();
+			int oldValueIndex = itr;
+			for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
+				Node oldValueAttr = attrList.item(attrItr);
+				String oldValueAttrName = oldValueAttr.getNodeName();
+				String oldValueAttrValue = oldValueAttr.getNodeValue();
+				if (isSubXML(oldValueAttrName, oldValueAttrValue)) {
+					System.out.println("Attribute is Sub XML : " + oldValueAttrName);
+					Node updateNode = oldValueNode.getParentNode();
+					NamedNodeMap updateAttrList = updateNode.getAttributes();
+					Diff diff = null;
+					for (int attrItr2 = 0; attrItr2 < updateAttrList.getLength(); attrItr2++) {
+						Node updateAttr = updateAttrList.item(attrItr2);
+						String updateAttrname = updateAttr.getNodeName();
+						String updateAttrValue = updateAttr.getNodeValue();
+						if (oldValueAttrName.equalsIgnoreCase(updateAttrname)) {
+							System.out.println("Inside Sub XML Diff : ");
+							diff = DiffBuilder.compare(oldValueAttrValue).withTest(updateAttrValue).checkForSimilar()
+									.ignoreComments().ignoreWhitespace().ignoreElementContentWhitespace()
+									.normalizeWhitespace().withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
+
+							if (diff != null && diff.hasDifferences()) {
+								Iterator<Difference> iter = diff.getDifferences().iterator();
+								ArrayList<String> subXmlDiffDataList = new ArrayList<String>();
+								while (iter.hasNext()) {
+									String subXmlDiffData = iter.next().toString();
+									System.out.println(subXmlDiffData);
+									if (!(subXmlDiffData.contains("Expected attribute name"))) {
+										subXmlDiffDataList.add(subXmlDiffData);
+									}
+								}
+							} else {
+
+								if (updateNode.getParentNode() != null) {
+									updateNode.getParentNode().removeChild(updateNode);
+									System.out.println("No Difference in Sub XML : ");
+
+								}
+							}
+						}
+					}
+				}
+			}
+
+		}
+		return inputDoc;
+
 	}
 
 	// Processing Update Doc with EnhancedCompare
