@@ -40,10 +40,9 @@ public class CDTXmlComparator {
 	TreeMap<Integer, Node> uniqueDeleteMap = new TreeMap<Integer, Node>();
 	TreeMap<Integer, Node> duplicateDeleteMap = new TreeMap<Integer, Node>();
 
-	ArrayList<String> subXmlDiffDataList = new ArrayList<String>();
 	TreeMap<Integer, ArrayList<String>> subXmlDiffDataMap = new TreeMap<Integer, ArrayList<String>>();
+	TreeMap<Integer, Node> duplicateSubXmlDiffDataMap = new TreeMap<Integer, Node>();
 
-	ArrayList<String> UniqueDiffDataList = new ArrayList<String>();
 	TreeMap<Integer, ArrayList<String>> uniqueDiffDataMap = new TreeMap<Integer, ArrayList<String>>();
 
 	public Document cleanCompareReport(File f) throws Exception {
@@ -82,8 +81,15 @@ public class CDTXmlComparator {
 		// Remove False Update
 		processedUpdateDoc = removeFalseUpdates(updateDoc);
 
+		// Create a new Processed document for EnhancedCompare with Root Element
+		processedUpdateEnhancedCompareDoc = parser.newDocument();
+		Element parentElementEnhancedCompare = processedUpdateEnhancedCompareDoc.createElement(parentNodeName);
+		processedUpdateEnhancedCompareDoc.appendChild(parentElementEnhancedCompare);
+
 		// Processing Update Doc with EnhancedCompare
 		processedUpdateEnhancedCompareDoc = addEnhancedCompareToUpdates(processedUpdateDoc);
+
+		outputDoc = processedUpdateEnhancedCompareDoc;
 
 		return outputDoc;
 	}
@@ -138,7 +144,7 @@ public class CDTXmlComparator {
 
 				if (diff.hasDifferences()) {
 					Iterator<Difference> iter = diff.getDifferences().iterator();
-
+					ArrayList<String> UniqueDiffDataList = new ArrayList<String>();
 					while (iter.hasNext()) {
 						String datadifference = iter.next().toString();
 						if (datadifference != null && !datadifference.contains("xml version")) {
@@ -189,7 +195,7 @@ public class CDTXmlComparator {
 				}
 			}
 		}
-		
+
 		processedInsertDeleteDoc.normalizeDocument();
 	}
 
@@ -208,13 +214,122 @@ public class CDTXmlComparator {
 	// Processing Update Doc with EnhancedCompare
 	public Document addEnhancedCompareToUpdates(Document doc) throws Exception {
 
-		return doc;
+		String expression = "//" + CDTConstants.UPDATE + "//" + CDTConstants.OLDVALUES;
+		NodeList nodeList = null;
+		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
+		System.out.println("Old Values nodeList Length()" + nodeList.getLength());
+		for (int itr = 0; itr < nodeList.getLength(); itr++) {
+			Node oldValueNode = nodeList.item(itr);
+			System.out.println("\nNode Name :" + oldValueNode.getNodeName());
+			NamedNodeMap attrList = oldValueNode.getAttributes();
+			int oldValueIndex = itr;
+			for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
+				Node oldValueAttr = attrList.item(attrItr);
+				String oldValueAttrName = oldValueAttr.getNodeName();
+				String oldValueAttrValue = oldValueAttr.getNodeValue();
+				if (isSubXML(oldValueAttrName, oldValueAttrValue)) {
+					System.out.println("Attribute is Sub XML : " + oldValueAttrName);
+					Node updateNode = oldValueNode.getParentNode();
+					NamedNodeMap updateAttrList = updateNode.getAttributes();
+					Diff diff = null;
+					for (int attrItr2 = 0; attrItr2 < updateAttrList.getLength(); attrItr2++) {
+						Node updateAttr = updateAttrList.item(attrItr2);
+						String updateAttrname = updateAttr.getNodeName();
+						String updateAttrValue = updateAttr.getNodeValue();
+						if (oldValueAttrName.equalsIgnoreCase(updateAttrname)) {
+							System.out.println("Inside Sub XML Diff : ");
+							diff = DiffBuilder.compare(oldValueAttrValue).withTest(updateAttrValue).checkForSimilar()
+									.ignoreComments().ignoreWhitespace().ignoreElementContentWhitespace()
+									.normalizeWhitespace().withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
+
+							if (diff != null && diff.hasDifferences()) {
+								Iterator<Difference> iter = diff.getDifferences().iterator();
+								ArrayList<String> subXmlDiffDataList = new ArrayList<String>();
+								while (iter.hasNext()) {
+									String subXmlDiffData = iter.next().toString();
+									if (!(subXmlDiffData.contains("Expected attribute name"))) {
+										subXmlDiffDataList.add(subXmlDiffData);
+									}
+								}
+								if (subXmlDiffDataList != null && subXmlDiffDataList.size() > 0) {
+									subXmlDiffDataMap.put(oldValueIndex, subXmlDiffDataList);
+								}
+							} else {
+								duplicateSubXmlDiffDataMap.put(oldValueIndex, updateNode);
+								System.out.println("No Difference in Sub XML : ");
+
+							}
+						}
+					}
+				}
+			}
+		}
+		addEnhancedCompareToProcessedUpdateDoc();
+		return processedUpdateEnhancedCompareDoc;
+	}
+
+	// Add Enhanced Compare To Processed Update Doc
+	public void addEnhancedCompareToProcessedUpdateDoc() {
+
+		if (subXmlDiffDataMap.size() > 0) {
+			for (Entry<Integer, ArrayList<String>> n : subXmlDiffDataMap.entrySet()) {
+
+				Node updateNode = processedUpdateDoc.getElementsByTagName(CDTConstants.UPDATE).item(n.getKey());
+				Node importedUpdateNode = processedUpdateEnhancedCompareDoc.importNode(updateNode, true);
+				processedUpdateEnhancedCompareDoc.getDocumentElement().appendChild(importedUpdateNode);
+
+				Element enhancedCompareEle = processedUpdateEnhancedCompareDoc.createElement("EnhancedCompare");
+				Element attributeEle = processedUpdateEnhancedCompareDoc.createElement("Attribute");
+				Element oldAttrEle = processedUpdateEnhancedCompareDoc.createElement("Old");
+				Element newAttrEle = processedUpdateEnhancedCompareDoc.createElement("New");
+
+				ArrayList<String> valuesList = new ArrayList<String>();
+				valuesList = n.getValue();
+				System.out.println("valuesList size: " + valuesList.size());
+
+				for (int i = 0; i < valuesList.size(); i++) {
+					String diffValues = valuesList.get(i);
+					System.out.println("diffValues in subXmlDiffDataMap : " + diffValues);
+					int beginIndex = diffValues.indexOf("@") + 1;
+					int endIndex = diffValues.indexOf("to");
+					String attrName = diffValues.substring(beginIndex, endIndex).trim();
+					System.out.println("AttrName in subXmlDiffDataMap :" + attrName);
+					int oldBeginIndex = diffValues.indexOf("value '") + 7;
+					int oldEndIndex = diffValues.indexOf("' but");
+					String oldAttrValue = diffValues.substring(oldBeginIndex, oldEndIndex).trim();
+					System.out.println("oldAttrValue in subXmlDiffDataMap :" + oldAttrValue);
+					int newBeginIndex = diffValues.indexOf("but was '") + 9;
+					int newEndIndex = diffValues.indexOf("- comparing") - 2;
+					String newAttrValue = diffValues.substring(newBeginIndex, newEndIndex).trim();
+					System.out.println("newAttrValue in subXmlDiffDataMap :" + newAttrValue);
+					oldAttrEle.setAttribute(attrName, oldAttrValue);
+					newAttrEle.setAttribute(attrName, newAttrValue);
+				}
+				NamedNodeMap updateAttrList = updateNode.getAttributes();
+				for (int attrItr = 0; attrItr < updateAttrList.getLength(); attrItr++) {
+					Node updateAttr = updateAttrList.item(attrItr);
+					String updateAttrname = updateAttr.getNodeName();
+					String updateAttrValue = updateAttr.getNodeValue();
+					if (isSubXML(updateAttrname, updateAttrValue)) {
+						System.out.println("updateAttrname :" + updateAttrname);
+						attributeEle.setAttribute("Name", updateAttrname);
+					}
+				}
+				attributeEle.appendChild(oldAttrEle);
+				attributeEle.appendChild(newAttrEle);
+				enhancedCompareEle.appendChild(attributeEle);
+				if (!duplicateSubXmlDiffDataMap.containsKey(n.getKey())) {
+					importedUpdateNode.appendChild(enhancedCompareEle);
+				}
+			}
+			processedUpdateEnhancedCompareDoc.normalizeDocument();
+		}
 	}
 
 	// Checking if the Attribute is Sub XML
 	public boolean isSubXML(String name, String value) {
 
-		return name.endsWith("XML");
+		return name.endsWith("XML") || name.endsWith("Xml");
 	}
 
 	// Get Delete NodeList for Insert Node
@@ -230,7 +345,7 @@ public class CDTXmlComparator {
 				if (attr.getNodeValue().trim().isEmpty()) {
 					expression = "//" + CDTConstants.DELETE;
 				} else {
-					expression = "//" + CDTConstants.DELETE  + "[@" + name + "=\'" + attr.getNodeValue() + "\']";
+					expression = "//" + CDTConstants.DELETE + "[@" + name + "=\'" + attr.getNodeValue() + "\']";
 				}
 				System.out.println("\nNode expression :" + expression);
 				deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
