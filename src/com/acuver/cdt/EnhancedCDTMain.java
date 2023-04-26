@@ -2,7 +2,6 @@ package com.acuver.cdt;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -10,10 +9,9 @@ import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Document;
 
+import com.acuver.cdt.constants.CDTConstants;
 import com.acuver.cdt.file.CDTFileReader;
 import com.acuver.cdt.file.CDTFileWriter;
-
-import com.acuver.cdt.constants.*;
 import com.acuver.cdt.xml.CDTXmlComparator;
 
 public class EnhancedCDTMain {
@@ -22,16 +20,25 @@ public class EnhancedCDTMain {
 	/* Create DOM Parser */
 	public static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
-	public static void main(String args[]) throws Exception {
+	public static String CDT_REPORT_DIR1 = null;
+	public static String CDT_REPORT_DIR2 = null;
+	public static String CDT_XMLS1 = null;
+	public static String CDT_XMLS2 = null;
+	public static String OUTPUT_DIR = null;
+	public static String YDKPREF1 = null;
+	public static String YDKPREF2 = null;
+
+	public static void main(String[] mode) throws Exception {
 
 		Document outputDoc = null;
-		Properties prop = null;
+
 		try {
 
 			CDTFileReader fileReader = new CDTFileReader();
-			prop = fileReader.readPropertiesFile1("enhancedcdt.properties");
+			CDTFileWriter fileWriter = new CDTFileWriter();
 
-			String CDT_REPORT_DIR1 = prop.getProperty(CDTConstants.CDT_REPORT_DIR1);
+			fileReader.readPropertiesFile();
+
 			System.out.println("CDT_REPORT_DIR1: " + CDT_REPORT_DIR1);
 
 			try {
@@ -41,9 +48,7 @@ public class EnhancedCDTMain {
 					System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
 				}
 
-				String location = prop.getProperty(CDTConstants.OUTPUT_DIR);
-
-				String fullPath = CDTFileWriter.findPathOfDirectory(location);
+				String fullPath = fileWriter.findPathOfDirectory(OUTPUT_DIR);
 
 				if (filesList != null && filesList.length > 0) {
 					for (File f : filesList) {
@@ -59,12 +64,13 @@ public class EnhancedCDTMain {
 								if (name.startsWith("YFS") || name.startsWith("PLT")) {
 
 									outputDoc = xmlComparator.cleanCompareReport(f);
-									CDTFileWriter.fileWriterMethod(fullPath, outputDoc, prop, f);
+									fileWriter.fileWriterMethod(fullPath, outputDoc, f);
+
 								} else {
 
 									try {
 
-										CDTFileWriter.copyFileToDirectory(f, fullPath);
+										fileWriter.copyFileToDirectory(f, fullPath);
 									} catch (IOException e) {
 										System.out.println("An error occurred while copying the file.");
 										e.printStackTrace();
@@ -80,7 +86,7 @@ public class EnhancedCDTMain {
 			} catch (SecurityException e) {
 				e.printStackTrace();
 			}
-			String CDT_REPORT_DIR2 = prop.getProperty(CDTConstants.CDT_REPORT_DIR2);
+
 			System.out.println("CDT_REPORT_DIR2: " + CDT_REPORT_DIR2);
 			try {
 
@@ -98,7 +104,6 @@ public class EnhancedCDTMain {
 				e.printStackTrace();
 			}
 
-			String CDT_XMLS1 = prop.getProperty(CDTConstants.CDT_XMLS1);
 			System.out.println("CDT_XMLS1: " + CDTConstants.CDT_XMLS1);
 
 			try {
@@ -114,7 +119,7 @@ public class EnhancedCDTMain {
 			} catch (SecurityException e) {
 				e.printStackTrace();
 			}
-			String CDT_XMLS2 = prop.getProperty(CDTConstants.CDT_XMLS2);
+
 			System.out.println("CDT_XMLS2: " + CDT_XMLS2);
 
 			try {
@@ -134,6 +139,10 @@ public class EnhancedCDTMain {
 
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+
+		for (int i = 0; i < mode.length; i++) {
+			System.out.println("Mode is passed as " + mode[0]);
 		}
 	}
 

@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -25,44 +24,21 @@ import com.acuver.cdt.constants.*;
 
 public class CDTFileWriter {
 
-	public CDTFileWriter(String fullPath, String fileName, String fileData)
-			throws IllegalArgumentException, IOException {
-
-		createXMLFile(fullPath, fileName, fileData);
-
-	}
-
-	public static String findPathOfDirectory(String location) {
+	public String findPathOfDirectory(String location) throws IOException {
 
 		String fullPath = "";
-
-		String fileLocation = "";
 
 		String timeStamp = new SimpleDateFormat(CDTConstants.dateFormat).format(new Date());
 
 		if (location == null) {
 
-			try {
-				fileLocation = new java.io.File(".").getCanonicalPath();
+			fullPath = CDTConstants.currentDirectory + "//" + timeStamp;
 
-				fullPath = fileLocation + "//" + timeStamp;
-
-				createDirectory(fullPath);
-
-				createDirectory(fullPath + "\\manual");
-
-			} catch (IOException e) {
-
-				e.printStackTrace();
-			}
+			createDirectory(fullPath + "\\manual");
 
 		} else {
 
-			fileLocation = location + "//";
-
-			createDirectory(location);
-
-			fullPath = fileLocation + timeStamp;
+			fullPath = location + "//" + timeStamp;
 
 			createDirectory(fullPath + "\\manual");
 		}
@@ -70,19 +46,22 @@ public class CDTFileWriter {
 		return fullPath;
 	}
 
-	public static void fileWriterMethod(String fullPath, Document outputDoc, Properties prop, File f) throws Exception {
+	public void fileWriterMethod(String fullPath, Document outputDoc, File f) throws Exception {
 		try {
 
 			final String fileData = convertDocumentToString(outputDoc);
 			final String fileName = f.getName();
-			CDTFileWriter writer = new CDTFileWriter(fullPath, fileName, fileData);
+
+			CDTFileWriter fileWriter = new CDTFileWriter();
+			fileWriter.createXMLFile(fullPath, fileName, fileData);
+
 			System.out.println("OUTPUT DIR:" + fullPath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public static String convertDocumentToString(Document document) throws Exception {
+	public String convertDocumentToString(Document document) throws Exception {
 		TransformerFactory tf = TransformerFactory.newInstance();
 		Transformer t = tf.newTransformer();
 		StringWriter sw = new StringWriter();
@@ -90,7 +69,7 @@ public class CDTFileWriter {
 		return sw.toString();
 	}
 
-	public static void createXMLFile(String fileLocation, String fileName, String fileData)
+	public void createXMLFile(String fileLocation, String fileName, String fileData)
 			throws IllegalArgumentException, IOException {
 		FileWriter writer = null;
 		try {
@@ -123,7 +102,7 @@ public class CDTFileWriter {
 
 	}
 
-	public static void createDirectory(String path) {
+	public void createDirectory(String path) {
 
 		try {
 			File directory = new File(path);
@@ -143,7 +122,7 @@ public class CDTFileWriter {
 	}
 	// input is document
 
-	public static String xmlFormatter(String xmlString) throws Exception {
+	public String xmlFormatter(String xmlString) throws Exception {
 		try {
 			// create a new transformer factory and set the formatting properties
 			TransformerFactory factory = TransformerFactory.newInstance();
@@ -171,7 +150,7 @@ public class CDTFileWriter {
 		}
 	}
 
-	public static void copyFileToDirectory(File sourceFile, String destinationDirectory) throws IOException {
+	public void copyFileToDirectory(File sourceFile, String destinationDirectory) throws IOException {
 		if (!sourceFile.exists()) {
 			throw new IllegalArgumentException("Source file " + sourceFile.getAbsolutePath() + " does not exist.");
 		}

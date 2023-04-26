@@ -15,5 +15,6 @@ public class CDTConstants {
 	public static final String UPDATE = "Update";
 	public static final String OLDVALUES = "OldValues";
 	public static final String ID = "__ID__";
+	public static final String currentDirectory = System.getProperty("user.dir");
 
 }

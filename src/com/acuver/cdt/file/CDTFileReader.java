@@ -5,14 +5,17 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
+
+import com.acuver.cdt.EnhancedCDTMain;
 import com.acuver.cdt.constants.*;
 
 public class CDTFileReader {
 
-	public Properties readPropertiesFile1(String propertiesFilePath) throws Exception {
-		File enhancedcdtfile = new File(propertiesFilePath);
+	public void readPropertiesFile() throws Exception {
 
+		File enhancedcdtfile = new File(CDTConstants.currentDirectory + "/enhancedcdt.properties");
 		Properties prop = null;
+
 		CDTHelper helper = new CDTHelper();
 		if (!enhancedcdtfile.exists()) {
 			// Display message and exit if config file does not exist
@@ -39,32 +42,19 @@ public class CDTFileReader {
 
 		System.out.println("Properties : " + "\n" + prop + "\n");
 
-		String CDT_REPORT_DIR1 = prop.getProperty(CDTConstants.CDT_REPORT_DIR1);
-		String CDT_REPORT_DIR2 = prop.getProperty(CDTConstants.CDT_REPORT_DIR2);
-		String CDT_XMLS1 = prop.getProperty(CDTConstants.CDT_XMLS1);
-		String CDT_XMLS2 = prop.getProperty(CDTConstants.CDT_XMLS2);
+		EnhancedCDTMain.CDT_REPORT_DIR1 = prop.getProperty(CDTConstants.CDT_REPORT_DIR1);
+		EnhancedCDTMain.CDT_REPORT_DIR2 = prop.getProperty(CDTConstants.CDT_REPORT_DIR2);
+		EnhancedCDTMain.CDT_XMLS1 = prop.getProperty(CDTConstants.CDT_XMLS1);
+		EnhancedCDTMain.CDT_XMLS2 = prop.getProperty(CDTConstants.CDT_XMLS2);
+		EnhancedCDTMain.OUTPUT_DIR = prop.getProperty(CDTConstants.OUTPUT_DIR);
 
-		if (CDT_REPORT_DIR1 == null && CDT_REPORT_DIR1.isEmpty()) {
+		if (EnhancedCDTMain.CDT_REPORT_DIR1 == null && EnhancedCDTMain.CDT_REPORT_DIR1.isEmpty()
+				|| EnhancedCDTMain.CDT_REPORT_DIR2 == null && EnhancedCDTMain.CDT_REPORT_DIR2.isEmpty()
+				|| EnhancedCDTMain.CDT_XMLS1 == null && EnhancedCDTMain.CDT_XMLS1.isEmpty()
+				|| EnhancedCDTMain.CDT_XMLS2 == null && EnhancedCDTMain.CDT_XMLS2.isEmpty()) {
 			helper.formPropertiesFileHelpMsg();
 			System.exit(1);
 		}
-
-		if (CDT_REPORT_DIR2 == null && CDT_REPORT_DIR2.isEmpty()) {
-			helper.formPropertiesFileHelpMsg();
-			System.exit(1);
-		}
-
-		if (CDT_XMLS1 == null && CDT_XMLS1.isEmpty()) {
-			helper.formPropertiesFileHelpMsg();
-			System.exit(1);
-		}
-
-		if (CDT_XMLS2 == null && CDT_XMLS2.isEmpty()) {
-			helper.formPropertiesFileHelpMsg();
-			System.exit(1);
-		}
-
-		return prop;
 
 	}
 
