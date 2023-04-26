@@ -85,7 +85,7 @@ public class CDTXmlComparator {
 		// Remove False Update
 		processedUpdateDoc = removeFalseUpdates(updateDoc);
 
-		// Create a new Processed document for EnhancedCompare with Root Element
+		// Create a new Processed document for Enhanced Compare with Root Element
 		processedUpdateEnhancedCompareDoc = parser.newDocument();
 		Element parentElementEnhancedCompare = processedUpdateEnhancedCompareDoc.createElement(parentNodeName);
 		processedUpdateEnhancedCompareDoc.appendChild(parentElementEnhancedCompare);
@@ -94,7 +94,6 @@ public class CDTXmlComparator {
 		processedUpdateEnhancedCompareDoc = addEnhancedCompareToUpdates(processedUpdateDoc);
 
 		outputDoc = processedUpdateEnhancedCompareDoc;
-		
 
 		return outputDoc;
 	}
@@ -128,12 +127,24 @@ public class CDTXmlComparator {
 		String expression = "//" + CDTConstants.INSERT;
 		NodeList nodeList = null;
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
+		if (nodeList == null || nodeList.getLength() == 0) {
+			System.out.println("No Insert Nodes in Input Doc : ");
+			processedInsertDeleteDoc = doc;
+			return processedInsertDeleteDoc;
+		}
+
 		System.out.println("Insert nodeList Length()" + nodeList.getLength());
 		for (int itr = 0; itr < nodeList.getLength(); itr++) {
 			Node insertNode = nodeList.item(itr);
 
 			// Getting Deletes from Insert.
 			NodeList deleteNodeList = getDeletesForInsert(doc, insertNode);
+
+			if (deleteNodeList == null || deleteNodeList.getLength() == 0) {
+				System.out.println("No Delete Nodes in Input Doc : ");
+				processedInsertDeleteDoc = doc;
+				return processedInsertDeleteDoc;
+			}
 
 			System.out.println("deleteNodeList length " + deleteNodeList.getLength());
 			for (int itr2 = 0; itr2 < deleteNodeList.getLength(); itr2++) {
