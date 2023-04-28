@@ -66,4 +66,23 @@ public class CDTFileReader {
 		return filesList;
 	}
 
+	// Read File From Directory
+	public String readFileFromDir(String directory, String fileName) {
+		// Creating a File object for directory
+		File directoryPath = new File(directory);
+		// List of all files and directories
+		File filesList[] = directoryPath.listFiles();
+		String fileData = "";
+		if (filesList != null && filesList.length > 0) {
+			for (File file : filesList) {
+				if (file != null && file.length() > 0) {
+					if (file.getName().startsWith(fileName)) {
+						fileData = file.toString();
+					}
+				}
+			}
+		}
+		return fileData;
+	}
+
 }
