@@ -10,14 +10,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import com.acuver.cdt.constants.*;
@@ -46,15 +44,12 @@ public class CDTFileWriter {
 		return fullPath;
 	}
 
-	public void fileWriterMethod(String fullPath, Document outputDoc, File f) throws Exception {
+	// Writing File to a Directory
+	public void fileWriterMethod(String fullPath, Document outputDoc, String fileName) throws Exception {
 		try {
-
 			final String fileData = convertDocumentToString(outputDoc);
-			final String fileName = f.getName();
-
 			CDTFileWriter fileWriter = new CDTFileWriter();
 			fileWriter.createXMLFile(fullPath, fileName, fileData);
-
 			System.out.println("OUTPUT DIR:" + fullPath);
 		} catch (Exception e) {
 			e.printStackTrace();
