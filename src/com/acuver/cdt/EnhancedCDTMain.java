@@ -2,13 +2,10 @@ package com.acuver.cdt;
 
 import java.io.File;
 import java.io.IOException;
-
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
-
 import org.w3c.dom.Document;
-
 import com.acuver.cdt.constants.CDTConstants;
 import com.acuver.cdt.file.CDTFileReader;
 import com.acuver.cdt.file.CDTFileWriter;
@@ -27,6 +24,8 @@ public class EnhancedCDTMain {
 	public static String OUTPUT_DIR = null;
 	public static String YDKPREF1 = null;
 	public static String YDKPREF2 = null;
+	public static String CDT_REPORT_DIR1_OUT = null;
+	public static String CDT_REPORT_DIR2_OUT = null;
 
 	public static void main(String[] mode) throws Exception {
 
@@ -55,16 +54,16 @@ public class EnhancedCDTMain {
 						if (f != null && f.length() > 0) {
 							System.out.println("The files in the CDT_REPORT_DIR1 are " + f.getName());
 
-							String name = f.getName();
+							String fileName = f.getName();
 
 							CDTXmlComparator xmlComparator = new CDTXmlComparator();
 
 							try {
 
-								if (name.startsWith("YFS") || name.startsWith("PLT")) {
+								if (fileName.startsWith("YFS") || fileName.startsWith("PLT")) {
 
 									outputDoc = xmlComparator.cleanCompareReport(f);
-									fileWriter.fileWriterMethod(fullPath, outputDoc, f);
+									fileWriter.fileWriterMethod(fullPath, outputDoc, fileName);
 
 								} else {
 
