@@ -1,7 +1,10 @@
 package com.acuver.cdt.xml;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -17,9 +20,10 @@ import org.w3c.dom.NodeList;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.Diff;
 import org.xmlunit.diff.Difference;
-
 import com.acuver.cdt.EnhancedCDTMain;
 import com.acuver.cdt.constants.CDTConstants;
+import com.acuver.cdt.file.CDTFileReader;
+import com.acuver.cdt.file.CDTFileWriter;
 
 public class CDTXmlComparator {
 
@@ -29,8 +33,10 @@ public class CDTXmlComparator {
 	Document updateDoc = null;
 	Document processedUpdateDoc = null;
 	Document processedUpdateEnhancedCompareDoc = null;
+	Document processedManualReviewDoc = null;
 
 	String tablePrefix;
+	String parentNodeName;
 
 	CDTXmlDifferenceEvaluator CDTXmlDifferenceEvaluator = new CDTXmlDifferenceEvaluator();
 
@@ -42,10 +48,9 @@ public class CDTXmlComparator {
 
 	TreeMap<Integer, ArrayList<String>> subXmlDiffDataMap = new TreeMap<Integer, ArrayList<String>>();
 	TreeMap<Integer, Node> duplicateSubXmlDiffDataMap = new TreeMap<Integer, Node>();
-	
+
 	ArrayList<String> mergeInsertDataList = new ArrayList<String>();
 	TreeMap<Integer, ArrayList<String>> mergeInsertDataMap = new TreeMap<Integer, ArrayList<String>>();
-
 
 	TreeMap<Integer, ArrayList<String>> uniqueDiffDataMap = new TreeMap<Integer, ArrayList<String>>();
 
@@ -59,7 +64,7 @@ public class CDTXmlComparator {
 		doc = db.parse(f);
 		inputDoc = doc;
 		Element root = doc.getDocumentElement();
-		String parentNodeName = root.getNodeName();
+		parentNodeName = root.getNodeName();
 		System.out.println("parentNodeName : " + parentNodeName);
 
 		// DOM Parser
@@ -93,7 +98,9 @@ public class CDTXmlComparator {
 		// Processing Update Doc with EnhancedCompare
 		processedUpdateEnhancedCompareDoc = addEnhancedCompareToUpdates(processedUpdateDoc);
 
-		outputDoc = processedUpdateEnhancedCompareDoc;
+		moveUpdatesToManualReview(processedUpdateEnhancedCompareDoc);
+
+		outputDoc = processedManualReviewDoc;
 
 		return outputDoc;
 	}
@@ -303,7 +310,7 @@ public class CDTXmlComparator {
 		return updateDoc;
 
 	}
-	
+
 	public void addMergeInsertToUpdateDoc() {
 
 		if (mergeInsertDataMap.size() > 0) {
@@ -333,7 +340,6 @@ public class CDTXmlComparator {
 		}
 
 	}
-
 
 	// Remove False Update
 	public Document removeFalseUpdates(Document doc) throws Exception {
@@ -506,6 +512,122 @@ public class CDTXmlComparator {
 				}
 			}
 			processedUpdateEnhancedCompareDoc.normalizeDocument();
+		}
+	}
+
+	// Move Updates Doc to ManualReview
+	public void moveUpdatesToManualReview(Document doc) throws Exception {
+		String expression = "//" + CDTConstants.UPDATE;
+		NodeList nodeList = null;
+		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
+		System.out.println("Update nodeList Length : " + nodeList.getLength());
+		String primaryKeyName = tablePrefix + "Key";
+		CDTFileWriter fileWriter = new CDTFileWriter();
+		CDTFileReader fileReader = new CDTFileReader();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
+		// DOM Parser
+		DocumentBuilder parser = EnhancedCDTMain.factory.newDocumentBuilder();
+		processedManualReviewDoc = parser.newDocument();
+		String parentNodeName = doc.getDocumentElement().getNodeName();
+		Element parentElementEnhancedCompare = processedManualReviewDoc.createElement(parentNodeName);
+		processedManualReviewDoc.appendChild(parentElementEnhancedCompare);
+
+		for (int itr = 0; itr < nodeList.getLength(); itr++) {
+			Node updateNode = nodeList.item(itr);
+			System.out.println("\nNode Name :" + updateNode.getNodeName());
+			Element updateElement = (Element) nodeList.item(itr);
+			String primaryKeyValue = updateElement.getAttribute(primaryKeyName);
+			System.out.println("primaryKeyValue of Update Node : " + primaryKeyValue);
+
+			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			// An instance of builder to parse the specified xml file
+			DocumentBuilder db = null;
+			db = dbf.newDocumentBuilder();
+			Document cdtxmls1doc = null;
+			Document cdtxmls2doc = null;
+			Element Xmls1Element = null;
+			Element Xmls2Element = null;
+			String Xmls1Modifyts = null;
+			String Xmls2Modifyts = null;
+
+			// Getting file from Directory
+			String file1Data = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS1, parentNodeName);
+			if (file1Data != null && !file1Data.isEmpty()) {
+				cdtxmls1doc = db.parse(file1Data);
+				NodeList Xmls1NodeList = cdtxmls1doc.getDocumentElement().getChildNodes();
+				System.out.println("Xmls1NodeList Length : " + Xmls1NodeList.getLength());
+				for (int Xmls1Nodeitr = 0; Xmls1Nodeitr < Xmls1NodeList.getLength(); Xmls1Nodeitr++) {
+					Node xmls1Node = Xmls1NodeList.item(Xmls1Nodeitr);
+					if (xmls1Node instanceof Element) {
+						Xmls1Element = (Element) xmls1Node;
+						String Xmls1PrimaryKeyValue = Xmls1Element.getAttribute(primaryKeyName);
+						if (Xmls1PrimaryKeyValue.equalsIgnoreCase(primaryKeyValue)) {
+							System.out.println("Xmls1PrimaryKeyValue : " + Xmls1PrimaryKeyValue);
+							Xmls1Modifyts = Xmls1Element.getAttribute("Modifyts");
+							System.out.println("Xmls1Modifyts for CDT_XMLS1 : " + Xmls1Modifyts);
+							break;
+						}
+					}
+				}
+			}
+
+			// Getting file from Directory
+			String file2Data = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS2, parentNodeName);
+			if (file2Data != null && !file2Data.isEmpty()) {
+				cdtxmls2doc = db.parse(file2Data);
+				NodeList Xmls2NodeList = cdtxmls2doc.getDocumentElement().getChildNodes();
+				System.out.println("Xmls2NodeList Length : " + Xmls2NodeList.getLength());
+				for (int Xmls2Nodeitr = 0; Xmls2Nodeitr < Xmls2NodeList.getLength(); Xmls2Nodeitr++) {
+					Node xmls2Node = Xmls2NodeList.item(Xmls2Nodeitr);
+					if (xmls2Node instanceof Element) {
+						Xmls2Element = (Element) xmls2Node;
+						String Xmls2PrimaryKeyValue = Xmls2Element.getAttribute(primaryKeyName);
+						if (Xmls2PrimaryKeyValue.equalsIgnoreCase(primaryKeyValue)) {
+							System.out.println("Xmls2PrimaryKeyValue : " + Xmls2PrimaryKeyValue);
+							Xmls2Modifyts = Xmls2Element.getAttribute("Modifyts");
+							System.out.println("Xmls2Modifyts for CDT_XMLS2 : " + Xmls2Modifyts);
+							break;
+						}
+					}
+				}
+			}
+
+			Date Xmls1Modifytsdate = null;
+			Date Xmls2Modifytsdate = null;
+
+			if (Xmls1Modifyts != null && !Xmls1Modifyts.isEmpty()) {
+				try {
+					Xmls1Modifytsdate = formatter.parse(Xmls1Modifyts);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+			}
+			if (Xmls2Modifyts != null && !Xmls2Modifyts.isEmpty()) {
+				try {
+					Xmls2Modifytsdate = formatter.parse(Xmls2Modifyts);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+			}
+
+			if (Xmls1Modifytsdate != null && Xmls2Modifytsdate != null) {
+				if (Xmls1Modifytsdate.before(Xmls2Modifytsdate)) {
+					System.out.println("Xmls1Modifytsdate is less than Xmls2Modifytsdate");
+					Node importedUpdateNode = processedManualReviewDoc.importNode(updateNode, true);
+					processedManualReviewDoc.getDocumentElement().appendChild(importedUpdateNode);
+				}
+			}
+		}
+
+		// Writing the File into Output Directory
+		try {
+			if (processedManualReviewDoc.getChildNodes().getLength() > 0) {
+				String fileName = parentNodeName + ".xml";
+				fileWriter.fileWriterMethod(EnhancedCDTMain.CDT_REPORT_DIR1_OUT, processedManualReviewDoc, fileName);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
