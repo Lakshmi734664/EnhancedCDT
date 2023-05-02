@@ -1,6 +1,9 @@
 package com.acuver.cdt.file;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
@@ -10,21 +13,24 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
-import com.acuver.cdt.constants.*;
+
+import com.acuver.cdt.constants.CDTConstants;
 
 public class CDTFileWriter {
 
-	public String findPathOfDirectory(String location) throws IOException {
+	public String fullPath = "";
 
-		String fullPath = "";
+	public String findPathOfDirectory(String location) throws IOException {
 
 		String timeStamp = new SimpleDateFormat(CDTConstants.dateFormat).format(new Date());
 
@@ -161,6 +167,68 @@ public class CDTFileWriter {
 
 		Path destinationPath = Paths.get(destinationDirectory, sourceFile.getName());
 		Files.copy(sourceFile.toPath(), destinationPath);
+	}
+
+	public void mergeAfterReview(String manualFolderName, String parentFolderName) {
+		File manualFolder = new File(manualFolderName);
+		File parentFolder = new File(parentFolderName);
+
+		if (!manualFolder.isDirectory()) {
+			System.err.println("Error: Manual folder name is not a directory.");
+			return;
+		}
+
+		if (!parentFolder.isDirectory()) {
+			System.err.println("Error: Parent folder name is not a directory.");
+			return;
+		}
+
+		for (File sourceFile : manualFolder.listFiles()) {
+			if (sourceFile.isFile()) {
+				File destFile = new File(parentFolder, sourceFile.getName());
+				if (destFile.exists()) {
+					try {
+						Path sourceFilePath = Paths.get(sourceFile.getPath());
+						Path destFilePath = Paths.get(destFile.getPath());
+
+						appendToFile(sourceFilePath, destFilePath);
+						System.out.println("Copied " + sourceFile.getPath() + " to " + destFile.getPath());
+					} catch (Exception e) {
+						System.err.println("Error copying file: " + e.getMessage());
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+
+	public static void appendToFile(Path sourceFilePath, Path destFilePath) {
+		File sourceFile = sourceFilePath.toFile();
+		File destFile = destFilePath.toFile();
+
+		if (!sourceFile.exists()) {
+			System.err.println("Error: Source file does not exist.");
+			return;
+		}
+
+		if (!destFile.exists()) {
+			System.err.println("Error: Destination file does not exist.");
+			return;
+		}
+
+		try (BufferedReader reader = new BufferedReader(new FileReader(sourceFile));
+				BufferedWriter writer = new BufferedWriter(new FileWriter(destFile, true))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+
+				writer.write(line);
+				writer.newLine();
+
+			}
+		} catch (IOException e) {
+			System.err.println("Error reading or writing file: " + e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 }

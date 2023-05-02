@@ -135,13 +135,19 @@ public class EnhancedCDTMain {
 			} catch (SecurityException e) {
 				e.printStackTrace();
 			}
+	
+			for (int i = 0; i < mode.length; i++) {
+				System.out.println("Mode is passed as " + mode[i]);
+				if(mode[i] == "merge") {
+				
+					//fileWriter.mergeAfterReview(fileWriter.fullPath + "\\manual", fileWriter.fullPath);
+				
+				}
+				fileWriter.mergeAfterReview("D:\\Parent\\manual", "D:\\Parent");
+			}
 
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-
-		for (int i = 0; i < mode.length; i++) {
-			System.out.println("Mode is passed as " + mode[0]);
 		}
 	}
 
