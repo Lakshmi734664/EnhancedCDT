@@ -1,9 +1,6 @@
 package com.acuver.cdt.file;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
@@ -14,6 +11,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -22,6 +20,9 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import com.acuver.cdt.constants.CDTConstants;
@@ -191,7 +192,8 @@ public class CDTFileWriter {
 						Path sourceFilePath = Paths.get(sourceFile.getPath());
 						Path destFilePath = Paths.get(destFile.getPath());
 
-						appendToFile(sourceFilePath, destFilePath);
+						appendXmlFile(sourceFilePath, destFilePath);
+
 						System.out.println("Copied " + sourceFile.getPath() + " to " + destFile.getPath());
 					} catch (Exception e) {
 						System.err.println("Error copying file: " + e.getMessage());
@@ -202,31 +204,43 @@ public class CDTFileWriter {
 		}
 	}
 
-	public static void appendToFile(Path sourceFilePath, Path destFilePath) {
-		File sourceFile = sourceFilePath.toFile();
-		File destFile = destFilePath.toFile();
+	public static void appendXmlFile(Path sourceFilePath, Path destFilePath) {
+		try {
 
-		if (!sourceFile.exists()) {
-			System.err.println("Error: Source file does not exist.");
-			return;
-		}
+			File sourceFile = sourceFilePath.toFile();
+			File destFile = destFilePath.toFile();
 
-		if (!destFile.exists()) {
-			System.err.println("Error: Destination file does not exist.");
-			return;
-		}
+			// Create a new DocumentBuilderFactory
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
-		try (BufferedReader reader = new BufferedReader(new FileReader(sourceFile));
-				BufferedWriter writer = new BufferedWriter(new FileWriter(destFile, true))) {
-			String line;
-			while ((line = reader.readLine()) != null) {
+			// Use the factory to create a new DocumentBuilder
+			DocumentBuilder builder = factory.newDocumentBuilder();
 
-				writer.write(line);
-				writer.newLine();
+			// Parse the source file to create a new Document object
+			Document sourceDoc = builder.parse(sourceFile);
 
+			// Parse the destination file to create a new Document object
+			Document destDoc = builder.parse(destFile);
+
+			// Find the root element of the destination document
+			Element destRootElement = destDoc.getDocumentElement();
+
+			// Import the nodes from the source document into the destination document
+			NodeList sourceNodes = sourceDoc.getDocumentElement().getChildNodes();
+			for (int i = 0; i < sourceNodes.getLength(); i++) {
+				Node importedNode = destDoc.importNode(sourceNodes.item(i), true);
+				destRootElement.appendChild(importedNode);
 			}
-		} catch (IOException e) {
-			System.err.println("Error reading or writing file: " + e.getMessage());
+
+			// Write the modified document back to the destination file
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			DOMSource source = new DOMSource(destDoc);
+			StreamResult result = new StreamResult(destFile);
+			transformer.transform(source, result);
+
+			System.out.println("XML file appended successfully.");
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
