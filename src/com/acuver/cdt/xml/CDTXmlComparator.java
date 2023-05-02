@@ -155,13 +155,13 @@ public class CDTXmlComparator {
 
 			System.out.println("deleteNodeList length " + deleteNodeList.getLength());
 			for (int itr2 = 0; itr2 < deleteNodeList.getLength(); itr2++) {
-				Node deleteNode = deleteNodeList.item(itr2);
+				Element deleteElement = (Element) deleteNodeList.item(itr2);
 				int insertNodeIndex = itr;
 				int deleteNodeIndex = itr2;
 				String insertNodeName = insertElement.getNodeName();
 				System.out.println("Comparing insertNode with deleteNode : ");
 
-				Diff diff = DiffBuilder.compare(insertElement).withTest(deleteNode).checkForSimilar().ignoreComments()
+				Diff diff = DiffBuilder.compare(insertElement).withTest(deleteElement).checkForSimilar().ignoreComments()
 						.ignoreWhitespace().ignoreElementContentWhitespace().normalizeWhitespace()
 						.withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
 
@@ -178,10 +178,10 @@ public class CDTXmlComparator {
 						uniqueDiffDataMap.put(insertNodeIndex, UniqueDiffDataList);
 					}
 					uniqueInsertMap.put(insertNodeIndex, insertNodeName);
-					uniqueDeleteMap.put(deleteNodeIndex, deleteNode);
+					uniqueDeleteMap.put(deleteNodeIndex, deleteElement);
 				} else {
 					duplicateInsertMap.put(insertNodeIndex, insertNodeName);
-					duplicateDeleteMap.put(deleteNodeIndex, deleteNode);
+					duplicateDeleteMap.put(deleteNodeIndex, deleteElement);
 					System.out.println(
 							"No Difference In insertNode and deleteNode.Both Insert and Delete Nodes are removed.");
 					break;
@@ -238,11 +238,11 @@ public class CDTXmlComparator {
 
 	        System.out.println("deleteNodeList length " + deleteNodeList.getLength());
 	        for (int itr2 = 0; itr2 < deleteNodeList.getLength(); itr2++) {
-	            Node deleteNode = deleteNodeList.item(itr2);
+	        	Element deleteElement = (Element) deleteNodeList.item(itr2);
 
 	            System.out.println("Comparing insertNode with deleteNode : ");
 
-	            Diff diff = DiffBuilder.compare(insertElement).withTest(deleteNode)
+	            Diff diff = DiffBuilder.compare(insertElement).withTest(deleteElement)
 	                .checkForSimilar().ignoreComments().ignoreWhitespace()
 	                .ignoreElementContentWhitespace().normalizeWhitespace()
 	                .withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
@@ -288,7 +288,7 @@ public class CDTXmlComparator {
 
 	            } else {
 	            	doc.getDocumentElement().removeChild(insertElement);
-	            	doc.getDocumentElement().removeChild(deleteNode);
+	            	doc.getDocumentElement().removeChild(deleteElement);
 	                System.out.println("No Difference In insertNode and deleteNode. Both Insert and Delete Nodes are removed.");
 	            }
 	        }
@@ -303,7 +303,7 @@ public class CDTXmlComparator {
 	            doc.getDocumentElement().removeChild(childNode);
 
 	        } else if (childNode.getNodeName().equals("Insert")) {
-	            doc.getDocumentElement().removeChild(childNode);
+	        	 doc.getDocumentElement().removeChild(childNode);
 
 	            Element updateElement = doc.createElement("Update");
 
@@ -318,7 +318,7 @@ public class CDTXmlComparator {
 	            
 	            					// Create a new "OldValues" element in the "Update" element with the same
 	            					if (oldValues != null) {
-	            						Element oldValuesElement = inputDoc.createElement("OldValues");
+	            						Element oldValuesElement = doc.createElement("OldValues");
 	            						NamedNodeMap oldValuesAttributes = oldValues.getAttributes();
 	            						for (int j = 0; j < oldValuesAttributes.getLength(); j++) {
 	            							Node oldValuesAttribute = oldValuesAttributes.item(j);
@@ -327,12 +327,13 @@ public class CDTXmlComparator {
 	            						}
 	            						updateElement.appendChild(oldValuesElement);
 	            					}
-	            					inputDoc.getDocumentElement().appendChild(updateElement);
+	            					doc.getDocumentElement().appendChild(updateElement);
 	            				}
-	        
+	       
 	    }
+	    updateDoc=doc;
 	    
-	    return inputDoc;
+	    return updateDoc;
 	}
 	// Remove False Update
 	public Document removeFalseUpdates(Document doc) throws Exception {
@@ -389,7 +390,8 @@ public class CDTXmlComparator {
 			}
 
 		}
-		return inputDoc;
+		processedUpdateDoc=doc;
+		return processedUpdateDoc;
 
 	}
 
@@ -652,5 +654,8 @@ public class CDTXmlComparator {
 		}
 		return deleteNodeList;
 	}
+	
+	
+	
 
 }
