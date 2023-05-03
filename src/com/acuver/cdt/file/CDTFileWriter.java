@@ -15,7 +15,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
@@ -25,13 +24,14 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import com.acuver.cdt.EnhancedCDTMain;
 import com.acuver.cdt.constants.CDTConstants;
 
 public class CDTFileWriter {
 
 	public String fullPath = "";
 
-	public String findPathOfDirectory(String location) throws IOException {
+	public String createOutDir(String location) throws IOException {
 
 		String timeStamp = new SimpleDateFormat(CDTConstants.dateFormat).format(new Date());
 
@@ -55,8 +55,8 @@ public class CDTFileWriter {
 	public void fileWriterMethod(String fullPath, Document outputDoc, String fileName) throws Exception {
 		try {
 			final String fileData = convertDocumentToString(outputDoc);
-			CDTFileWriter fileWriter = new CDTFileWriter();
-			fileWriter.createXMLFile(fullPath, fileName, fileData);
+
+			createXMLFile(fullPath, fileName, fileData);
 			System.out.println("OUTPUT DIR:" + fullPath);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -64,11 +64,35 @@ public class CDTFileWriter {
 	}
 
 	public String convertDocumentToString(Document document) throws Exception {
-		TransformerFactory tf = TransformerFactory.newInstance();
-		Transformer t = tf.newTransformer();
+
+		Transformer transformer = EnhancedCDTMain.tf.newTransformer();
 		StringWriter sw = new StringWriter();
-		t.transform(new DOMSource(document), new StreamResult(sw));
-		return sw.toString();
+		transformer.transform(new DOMSource(document), new StreamResult(sw));
+
+		try {
+			// create a new transformer factory and set the formatting properties
+			EnhancedCDTMain.tf.setAttribute("indent-number", 4);
+
+			// create a new transformer and set the formatting properties
+			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+			// create a new DOM source from the XML string
+			DOMSource source = new DOMSource(DocumentBuilderFactory.newInstance().newDocumentBuilder()
+					.parse(new InputSource(new StringReader(sw.toString()))));
+
+			// create a new string writer to store the formatted XML
+			StringWriter writer = new StringWriter();
+
+			// transform the DOM source to a string writer with the transformer
+			transformer.transform(source, new StreamResult(writer));
+
+			// return the formatted XML as a string
+			return writer.toString();
+		} catch (Exception e) {
+			throw new RuntimeException("Error occurs when pretty-printing xml:\n" + sw.toString(), e);
+		}
+
 	}
 
 	public void createXMLFile(String fileLocation, String fileName, String fileData)
@@ -90,8 +114,7 @@ public class CDTFileWriter {
 				writer = new FileWriter(file);
 
 				// Write the file data to the file
-				String fileData1 = xmlFormatter(fileData);
-				writer.write(fileData1);
+				writer.write(fileData);
 
 				System.out.println("File created successfully!");
 			}
@@ -120,35 +143,6 @@ public class CDTFileWriter {
 			}
 		} catch (Exception e) {
 			System.out.println("Caught an exception: " + e.getMessage());
-		}
-	}
-	// input is document
-
-	public String xmlFormatter(String xmlString) throws Exception {
-		try {
-			// create a new transformer factory and set the formatting properties
-			TransformerFactory factory = TransformerFactory.newInstance();
-			factory.setAttribute("indent-number", 4);
-
-			// create a new transformer and set the formatting properties
-			Transformer transformer = factory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-			// create a new DOM source from the XML string
-			DOMSource source = new DOMSource(DocumentBuilderFactory.newInstance().newDocumentBuilder()
-					.parse(new InputSource(new StringReader(xmlString))));
-
-			// create a new string writer to store the formatted XML
-			StringWriter writer = new StringWriter();
-
-			// transform the DOM source to a string writer with the transformer
-			transformer.transform(source, new StreamResult(writer));
-
-			// return the formatted XML as a string
-			return writer.toString();
-		} catch (Exception e) {
-			throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
 		}
 	}
 
@@ -192,7 +186,7 @@ public class CDTFileWriter {
 						Path sourceFilePath = Paths.get(sourceFile.getPath());
 						Path destFilePath = Paths.get(destFile.getPath());
 
-						appendXmlFile(sourceFilePath, destFilePath);
+						appendXmlFile(sourceFilePath.toFile(), destFilePath.toFile());
 
 						System.out.println("Copied " + sourceFile.getPath() + " to " + destFile.getPath());
 					} catch (Exception e) {
@@ -204,17 +198,13 @@ public class CDTFileWriter {
 		}
 	}
 
-	public static void appendXmlFile(Path sourceFilePath, Path destFilePath) {
+	public static void appendXmlFile(File sourceFile, File destFile) {
 		try {
 
-			File sourceFile = sourceFilePath.toFile();
-			File destFile = destFilePath.toFile();
-
 			// Create a new DocumentBuilderFactory
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
 			// Use the factory to create a new DocumentBuilder
-			DocumentBuilder builder = factory.newDocumentBuilder();
+			DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();
 
 			// Parse the source file to create a new Document object
 			Document sourceDoc = builder.parse(sourceFile);
@@ -233,8 +223,7 @@ public class CDTFileWriter {
 			}
 
 			// Write the modified document back to the destination file
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-			Transformer transformer = transformerFactory.newTransformer();
+			Transformer transformer = EnhancedCDTMain.tf.newTransformer();
 			DOMSource source = new DOMSource(destDoc);
 			StreamResult result = new StreamResult(destFile);
 			transformer.transform(source, result);

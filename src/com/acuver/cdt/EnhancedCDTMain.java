@@ -2,10 +2,14 @@ package com.acuver.cdt;
 
 import java.io.File;
 import java.io.IOException;
+
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
+
 import org.w3c.dom.Document;
+
 import com.acuver.cdt.constants.CDTConstants;
 import com.acuver.cdt.file.CDTFileReader;
 import com.acuver.cdt.file.CDTFileWriter;
@@ -15,7 +19,9 @@ public class EnhancedCDTMain {
 
 	public static XPath xPath = XPathFactory.newInstance().newXPath();
 	/* Create DOM Parser */
+	// Create a new DocumentBuilderFactory
 	public static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+	public static TransformerFactory tf = TransformerFactory.newInstance();
 
 	public static String CDT_REPORT_DIR1 = null;
 	public static String CDT_REPORT_DIR2 = null;
@@ -47,7 +53,7 @@ public class EnhancedCDTMain {
 					System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
 				}
 
-				String fullPath = fileWriter.findPathOfDirectory(OUTPUT_DIR);
+				String fullPath = fileWriter.createOutDir(OUTPUT_DIR);
 
 				if (filesList != null && filesList.length > 0) {
 					for (File f : filesList) {
@@ -140,10 +146,11 @@ public class EnhancedCDTMain {
 				System.out.println("Mode is passed as " + mode[i]);
 				if (mode[i].equals("merge")) {
 
-					// fileWriter.mergeAfterReview(fileWriter.fullPath + "\\manual", fileWriter.fullPath);
+					// fileWriter.mergeAfterReview(fileWriter.fullPath + "\\manual",
+					// fileWriter.fullPath);
 					fileWriter.mergeAfterReview("D:\\Parent\\manual", "D:\\Parent");
 				}
-				
+
 			}
 
 		} catch (IOException e) {
