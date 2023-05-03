@@ -286,7 +286,8 @@ public class CDTXmlComparator {
 			System.out.println("deleteNodeList length " + deleteNodeList.getLength());
 			for (int itr2 = 0; itr2 < deleteNodeList.getLength(); itr2++) {
 				Element deleteElement = (Element) deleteNodeList.item(itr2);
-
+				
+				boolean insertHasDifferences = false;
 				System.out.println("Comparing insertNode with deleteNode : ");
 
 				Diff diff = DiffBuilder.compare(insertElement).withTest(deleteElement).checkForSimilar()
@@ -294,23 +295,7 @@ public class CDTXmlComparator {
 						.withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
 
 				if (diff.hasDifferences()) {
-					NodeList oldValuesList = insertElement.getChildNodes();
-					Element oldValuesElement = null;
-
-					// Look for existing OldValues element and update it
-					for (int i = 0; i < oldValuesList.getLength(); i++) {
-						Node oldValuesNode = oldValuesList.item(i);
-						if (oldValuesNode.getNodeName().equals("OldValues")) {
-							oldValuesElement = (Element) oldValuesNode;
-							break;
-						}
-					}
-
-					// Create new OldValues element if it doesn't exist
-					if (oldValuesElement == null) {
-						oldValuesElement = doc.createElement("OldValues");
-						insertElement.appendChild(oldValuesElement);
-					}
+					Element oldValuesElement = getChildElement(insertElement, "OldValues");
 
 					// Store the difference values in the OldValues element
 					Iterator<Difference> iter = diff.getDifferences().iterator();
@@ -320,8 +305,12 @@ public class CDTXmlComparator {
 
 						if (difference != null && !difference.contains("xml version")) {
 							int attrNameStartIndex = difference.indexOf("@") + 1;
-							int attrNameEndIndex = difference.indexOf("to");
+							int attrNameEndIndex = difference.indexOf("to <");
+
+							System.out.println("attrNameStartIndex: " + attrNameStartIndex);
+							System.out.println("attrNameEndIndex: " + attrNameEndIndex);
 							String attrName = difference.substring(attrNameStartIndex, attrNameEndIndex).trim();
+
 							System.out.println("UpdateAttrName :" + attrName);
 
 							int oldAttrValueStartIndex = difference.indexOf("but was '") + 9;
@@ -329,58 +318,72 @@ public class CDTXmlComparator {
 							String oldAttrValue = difference.substring(oldAttrValueStartIndex, oldAttrValueEndIndex)
 									.trim();
 
+							System.out.println("Old Attribute Value: " + oldAttrValue);
+
 							oldValuesElement.setAttribute(attrName, oldAttrValue);
 						}
 					}
+					insertHasDifferences = true;
 
 				} else {
+					System.out.println("No Difference In insertNode and deleteNode. Both Insert and Delete Nodes are removed.");
+				}
+
+				if (insertHasDifferences) {
+					// Replace Insert element with Update element
+					Element updateElement = doc.createElement("Update");
+
+					NamedNodeMap attributes = insertElement.getAttributes();
+					for (int j = 0; j < attributes.getLength(); j++) {
+						Node attribute = attributes.item(j);
+						updateElement.setAttribute(attribute.getNodeName(), attribute.getNodeValue());
+					}
+ 
 					doc.getDocumentElement().removeChild(insertElement);
 					doc.getDocumentElement().removeChild(deleteElement);
-					System.out.println(
-							"No Difference In insertNode and deleteNode. Both Insert and Delete Nodes are removed.");
-				}
-			}
-		}
+					doc.getDocumentElement().appendChild(updateElement);
 
-		// Replace Insert elements with Update elements
-		NodeList childNodes = doc.getDocumentElement().getChildNodes();
-		for (int i = 0; i < childNodes.getLength(); i++) {
-			Node childNode = childNodes.item(i);
+					Element oldValues = (Element) ((Element) insertElement).getElementsByTagName("OldValues").item(0);
 
-			if (childNode.getNodeName().equals("Delete")) {
-				doc.getDocumentElement().removeChild(childNode);
-
-			} else if (childNode.getNodeName().equals("Insert")) {
-				doc.getDocumentElement().removeChild(childNode);
-
-				Element updateElement = doc.createElement("Update");
-
-				NamedNodeMap attributes = childNode.getAttributes();
-
-				for (int j = 0; j < attributes.getLength(); j++) {
-					Node attribute = attributes.item(j);
-					updateElement.setAttribute(attribute.getNodeName(), attribute.getNodeValue());
-				}
-				Element oldValues = (Element) ((Element) childNode).getElementsByTagName("OldValues").item(0);
-
-				// Create a new "OldValues" element in the "Update" element with the same
-				if (oldValues != null) {
-					Element oldValuesElement = doc.createElement("OldValues");
-					NamedNodeMap oldValuesAttributes = oldValues.getAttributes();
-					for (int j = 0; j < oldValuesAttributes.getLength(); j++) {
-						Node oldValuesAttribute = oldValuesAttributes.item(j);
-						oldValuesElement.setAttribute(oldValuesAttribute.getNodeName(),
-								oldValuesAttribute.getNodeValue());
+					// Create a new "OldValues" element in the "Update" element with the same
+					if (oldValues != null) {
+						Element oldValuesElement = doc.createElement("OldValues");
+						NamedNodeMap oldValuesAttributes = oldValues.getAttributes();
+						for (int j = 0; j < oldValuesAttributes.getLength(); j++) {
+							Node oldValuesAttribute = oldValuesAttributes.item(j);
+							oldValuesElement.setAttribute(oldValuesAttribute.getNodeName(),
+									oldValuesAttribute.getNodeValue());
+						}
+						updateElement.appendChild(oldValuesElement);
 					}
-					updateElement.appendChild(oldValuesElement);
-				}
-				doc.getDocumentElement().appendChild(updateElement);
-			}
 
+				}
+			}
 		}
 		updateDoc = doc;
 
 		return updateDoc;
+	}
+
+	public Element getChildElement(Element insert, String childName) {
+		NodeList childNodes = insert.getChildNodes();
+		Element childElement = null;
+		 // Look for existing child element and update it
+		for (int i = 0; i < childNodes.getLength(); i++) {
+			Node childNode = childNodes.item(i);
+			if (childNode.getNodeType() == Node.ELEMENT_NODE && childNode.getNodeName().equals(childName)) {
+				childElement = (Element) childNode;
+				break;
+			}
+		}
+		 // Create new child element if it doesn't exist
+		if (childElement == null) {
+			Document doc = insert.getOwnerDocument();
+			childElement = doc.createElement(childName);
+			insert.appendChild(childElement);
+		}
+
+		return childElement;
 	}
 
 	// Remove False Update
@@ -416,27 +419,18 @@ public class CDTXmlComparator {
 
 							if (diff != null && diff.hasDifferences()) {
 								Iterator<Difference> iter = diff.getDifferences().iterator();
-								ArrayList<String> subXmlDiffDataList = new ArrayList<String>();
 								while (iter.hasNext()) {
 									String subXmlDiffData = iter.next().toString();
-									System.out.println(subXmlDiffData);
-									if (!(subXmlDiffData.contains("Expected attribute name"))) {
-										subXmlDiffDataList.add(subXmlDiffData);
-									}
+									System.out.println(subXmlDiffData);	
 								}
 							} else {
-
-								if (updateNode.getParentNode() != null) {
 									updateNode.getParentNode().removeChild(updateNode);
 									System.out.println("No Difference in Sub XML : ");
-
-								}
 							}
 						}
 					}
 				}
 			}
-
 		}
 		processedUpdateDoc = doc;
 		return processedUpdateDoc;
