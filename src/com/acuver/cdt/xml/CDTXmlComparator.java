@@ -635,27 +635,43 @@ public class CDTXmlComparator {
 	// Get Delete NodeList for Insert Node
 	public NodeList getDeletesForInsert(Document doc, Element insertElement) throws XPathExpressionException {
 		System.out.println("\nNode Name :" + insertElement.getNodeName());
-		NamedNodeMap attrList = insertElement.getAttributes();
-		String expression;
+		String expression = null;
 		NodeList deleteNodeList = null;
+		String attrWithName = tablePrefix + "Name";
+		String attrWithId = tablePrefix + "Id";
+
+		NamedNodeMap attrList = insertElement.getAttributes();
 		for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
 			Node attr = attrList.item(attrItr);
-			String name = attr.getNodeName();
-			if (name.endsWith("Name")) {
-				if (attr.getNodeValue().trim().isEmpty()) {
-					expression = "//" + CDTConstants.DELETE;
-				} else {
-					expression = "//" + CDTConstants.DELETE + "[@" + name + "=\'" + attr.getNodeValue() + "\']";
+			String attrName = attr.getNodeName();
+			if (attrName.equalsIgnoreCase(tablePrefix)) {
+				if (!attr.getNodeValue().trim().isEmpty()) {
+					expression = "//" + CDTConstants.DELETE + "[@" + attrName + "=\'" + attr.getNodeValue() + "\']";
+					System.out.println("\nNode expression :" + expression);
+					deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+							XPathConstants.NODESET);
 				}
-				System.out.println("\nNode expression :" + expression);
-				deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
-						XPathConstants.NODESET);
+				break;
+			} else if (attrName.equalsIgnoreCase(attrWithName)) {
+				if (!attr.getNodeValue().trim().isEmpty()) {
+					expression = "//" + CDTConstants.DELETE + "[@" + attrName + "=\'" + attr.getNodeValue() + "\']";
+					System.out.println("\nNode expression :" + expression);
+					deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+							XPathConstants.NODESET);
+				}
+				break;
+			} else if (attrName.equalsIgnoreCase(attrWithId)) {
+				if (!attr.getNodeValue().trim().isEmpty()) {
+					expression = "//" + CDTConstants.DELETE + "[@" + attrName + "=\'" + attr.getNodeValue() + "\']";
+					System.out.println("\nNode expression :" + expression);
+					deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+							XPathConstants.NODESET);
+				}
+				break;
 			}
 		}
+
 		return deleteNodeList;
 	}
-	
-	
-	
 
 }
