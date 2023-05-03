@@ -29,7 +29,7 @@ public class CDTXmlComparator {
 
 	Document inputDoc = null;
 	Document outputDoc = null;
-	Document processedInsertDeleteDoc = null;
+	// Document processedInsertDeleteDoc = null;
 	Document updateDoc = null;
 	Document processedUpdateDoc = null;
 	Document processedUpdateEnhancedCompareDoc = null;
@@ -57,14 +57,6 @@ public class CDTXmlComparator {
 		parentNodeName = root.getNodeName();
 		System.out.println("parentNodeName : " + parentNodeName);
 
-		// DOM Parser
-		DocumentBuilder parser = EnhancedCDTMain.factory.newDocumentBuilder();
-
-		// Create a new Processed document with Root Element
-		processedInsertDeleteDoc = parser.newDocument();
-		Element parentElement = processedInsertDeleteDoc.createElement(parentNodeName);
-		processedInsertDeleteDoc.appendChild(parentElement);
-
 		// Getting the Table Prefix Name
 		tablePrefix = getTablePrefix(parentNodeName);
 		String primaryKeyName = tablePrefix + "Key";
@@ -72,7 +64,7 @@ public class CDTXmlComparator {
 		CDTXmlDifferenceEvaluator.setPrimaryKeyName(primaryKeyName);
 
 		// Processing Insert/Delete Tags
-		processedInsertDeleteDoc = removeInsertDeleteElementsWithPrimaryIssue(inputDoc);
+		Document processedInsertDeleteDoc = removeInsertDeleteElementsWithPrimaryIssue(inputDoc);
 
 		// Merge Insert/Delete To Update Doc
 		updateDoc = mergeInsertDeleteToUpdate(processedInsertDeleteDoc);
@@ -81,7 +73,7 @@ public class CDTXmlComparator {
 		processedUpdateDoc = removeFalseUpdates(updateDoc);
 
 		// Create a new Processed document for Enhanced Compare with Root Element
-		processedUpdateEnhancedCompareDoc = parser.newDocument();
+		processedUpdateEnhancedCompareDoc = db.newDocument();
 		Element parentElementEnhancedCompare = processedUpdateEnhancedCompareDoc.createElement(parentNodeName);
 		processedUpdateEnhancedCompareDoc.appendChild(parentElementEnhancedCompare);
 
@@ -113,21 +105,27 @@ public class CDTXmlComparator {
 				foundSpace = true;
 			}
 		}
-		String primaryKeyName = String.valueOf(charArray);
-		primaryKeyName = primaryKeyName.replaceAll("\\s", "");
-		return primaryKeyName;
+		String tablePrefix = String.valueOf(charArray);
+		tablePrefix = tablePrefix.replaceAll("\\s", "");
+		return tablePrefix;
 	}
 
 	// Processing Insert/Delete Tags
 	public Document removeInsertDeleteElementsWithPrimaryIssue(Document doc) throws Exception {
+
+		Document processedInsertDeleteDoc = null;
+		DocumentBuilder parser = EnhancedCDTMain.factory.newDocumentBuilder();
+		// Create a new Processed document with Root Element
+		processedInsertDeleteDoc = parser.newDocument();
+		Element parentElement = processedInsertDeleteDoc.createElement(parentNodeName);
+		processedInsertDeleteDoc.appendChild(parentElement);
 
 		String expression = "//" + CDTConstants.INSERT;
 		NodeList nodeList = null;
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 		if (nodeList == null || nodeList.getLength() == 0) {
 			System.out.println("No Insert Nodes in Input Doc : Returning All the Delete Nodes in Output ");
-			processedInsertDeleteDoc = doc;
-			return processedInsertDeleteDoc;
+			return doc;
 		}
 
 		System.out.println("Insert nodeList Length : " + nodeList.getLength());
@@ -141,7 +139,8 @@ public class CDTXmlComparator {
 				System.out.println("No Delete Nodes for this Insert Node : " + itr);
 
 				// Adding Unique Insert Node
-				addUniqueElementsToProcessedDoc(insertElement, null);
+				processedInsertDeleteDoc = addUniqueElementsToProcessedDoc(processedInsertDeleteDoc, insertElement,
+						null);
 
 			} else {
 
@@ -166,7 +165,8 @@ public class CDTXmlComparator {
 						System.out.println("UniqueDiffDataList : " + UniqueDiffDataList.toString());
 
 						// Adding Unique Elements to Output
-						addUniqueElementsToProcessedDoc(insertElement, deleteElement);
+						processedInsertDeleteDoc = addUniqueElementsToProcessedDoc(processedInsertDeleteDoc,
+								insertElement, deleteElement);
 
 					} else {
 						System.out.println(
@@ -179,14 +179,15 @@ public class CDTXmlComparator {
 		}
 
 		// Adding Unique Delete Elements to Output
-		addUniqueDeleteElementsToProcessedDoc(doc);
+		processedInsertDeleteDoc = addUniqueDeleteElementsToProcessedDoc(processedInsertDeleteDoc, doc);
 
 		return processedInsertDeleteDoc;
 
 	}
 
 	// Add Unique Elements To Processed Doc
-	public void addUniqueElementsToProcessedDoc(Node insertNode, Node deleteNode) {
+	public Document addUniqueElementsToProcessedDoc(Document processedInsertDeleteDoc, Node insertNode,
+			Node deleteNode) {
 		if (insertNode != null) {
 			Node importedInsertNode = processedInsertDeleteDoc.importNode(insertNode, true);
 			processedInsertDeleteDoc.getDocumentElement().appendChild(importedInsertNode);
@@ -195,10 +196,12 @@ public class CDTXmlComparator {
 			Node importedDeleteNode = processedInsertDeleteDoc.importNode(deleteNode, true);
 			processedInsertDeleteDoc.getDocumentElement().appendChild(importedDeleteNode);
 		}
+		return processedInsertDeleteDoc;
 	}
 
 	// Add Unique Delete Elements To Processed Doc
-	public void addUniqueDeleteElementsToProcessedDoc(Document doc) throws XPathExpressionException {
+	public Document addUniqueDeleteElementsToProcessedDoc(Document processedInsertDeleteDoc, Document doc)
+			throws XPathExpressionException {
 		NodeList deleteNodeList = null;
 		String expression = "//" + CDTConstants.DELETE;
 		deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
@@ -208,9 +211,11 @@ public class CDTXmlComparator {
 			if (InsertNodeList == null || InsertNodeList.getLength() == 0) {
 				System.out
 						.println("No Insert Nodes for this Delete Node : Hence this is a Unique Delete Element " + itr);
-				addUniqueElementsToProcessedDoc(null, deleteElement);
+				processedInsertDeleteDoc = addUniqueElementsToProcessedDoc(processedInsertDeleteDoc, null,
+						deleteElement);
 			}
 		}
+		return processedInsertDeleteDoc;
 	}
 
 	// Get Inserts For Delete Element
@@ -219,32 +224,41 @@ public class CDTXmlComparator {
 		System.out.println("\nNode Name :" + deleteElement.getNodeName());
 		String expression = null;
 		NodeList insertNodeList = null;
-		String attrWithName = tablePrefix + "Name";
-		String attrWithId = tablePrefix + "Id";
+		String tablePrefixLower = tablePrefix.toLowerCase();
+		String attrWithName = tablePrefixLower + "name";
+		String attrWithId = tablePrefixLower + "id";
+		System.out.println("tablePrefixLower : " + tablePrefixLower);
 
 		NamedNodeMap attrList = deleteElement.getAttributes();
 		for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
 			Node attr = attrList.item(attrItr);
 			String attrName = attr.getNodeName();
-			if (attrName.equalsIgnoreCase(tablePrefix)) {
-				if (!attr.getNodeValue().trim().isEmpty()) {
-					expression = "//" + CDTConstants.INSERT + "[@" + attrName + "=\'" + attr.getNodeValue() + "\']";
+			String attrValue = attr.getNodeValue();
+			if (attrName.equalsIgnoreCase(tablePrefixLower)) {
+				if (!(attrValue.trim().isEmpty())) {
+					expression = "//" + CDTConstants.INSERT
+							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+							+ attrName.toLowerCase() + "']='" + attrValue + "']";
 					System.out.println("\nNode expression :" + expression);
 					insertNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
 							XPathConstants.NODESET);
 				}
 				break;
 			} else if (attrName.equalsIgnoreCase(attrWithName)) {
-				if (!attr.getNodeValue().trim().isEmpty()) {
-					expression = "//" + CDTConstants.INSERT + "[@" + attrName + "=\'" + attr.getNodeValue() + "\']";
+				if (!(attrValue.trim().isEmpty())) {
+					expression = "//" + CDTConstants.INSERT
+							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+							+ attrName.toLowerCase() + "']='" + attrValue + "']";
 					System.out.println("\nNode expression :" + expression);
 					insertNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
 							XPathConstants.NODESET);
 				}
 				break;
 			} else if (attrName.equalsIgnoreCase(attrWithId)) {
-				if (!attr.getNodeValue().trim().isEmpty()) {
-					expression = "//" + CDTConstants.INSERT + "[@" + attrName + "=\'" + attr.getNodeValue() + "\']";
+				if (!(attrValue.trim().isEmpty())) {
+					expression = "//" + CDTConstants.INSERT
+							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+							+ attrName.toLowerCase() + "']='" + attrValue + "']";
 					System.out.println("\nNode expression :" + expression);
 					insertNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
 							XPathConstants.NODESET);
@@ -672,32 +686,41 @@ public class CDTXmlComparator {
 		System.out.println("\nNode Name :" + insertElement.getNodeName());
 		String expression = null;
 		NodeList deleteNodeList = null;
-		String attrWithName = tablePrefix + "Name";
-		String attrWithId = tablePrefix + "Id";
+		String tablePrefixLower = tablePrefix.toLowerCase();
+		String attrWithName = tablePrefixLower + "name";
+		String attrWithId = tablePrefixLower + "id";
+		System.out.println("tablePrefixLower : " + tablePrefixLower);
 
 		NamedNodeMap attrList = insertElement.getAttributes();
 		for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
 			Node attr = attrList.item(attrItr);
 			String attrName = attr.getNodeName();
-			if (attrName.equalsIgnoreCase(tablePrefix)) {
-				if (!attr.getNodeValue().trim().isEmpty()) {
-					expression = "//" + CDTConstants.DELETE + "[@" + attrName + "=\'" + attr.getNodeValue() + "\']";
+			String attrValue = attr.getNodeValue();
+			if (attrName.equalsIgnoreCase(tablePrefixLower)) {
+				if (!(attrValue.trim().isEmpty())) {
+					expression = "//" + CDTConstants.DELETE
+							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+							+ attrName.toLowerCase() + "']='" + attrValue + "']";
 					System.out.println("\nNode expression :" + expression);
 					deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
 							XPathConstants.NODESET);
 				}
 				break;
 			} else if (attrName.equalsIgnoreCase(attrWithName)) {
-				if (!attr.getNodeValue().trim().isEmpty()) {
-					expression = "//" + CDTConstants.DELETE + "[@" + attrName + "=\'" + attr.getNodeValue() + "\']";
+				if (!(attrValue.trim().isEmpty())) {
+					expression = "//" + CDTConstants.DELETE
+							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+							+ attrName.toLowerCase() + "']='" + attrValue + "']";
 					System.out.println("\nNode expression :" + expression);
 					deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
 							XPathConstants.NODESET);
 				}
 				break;
 			} else if (attrName.equalsIgnoreCase(attrWithId)) {
-				if (!attr.getNodeValue().trim().isEmpty()) {
-					expression = "//" + CDTConstants.DELETE + "[@" + attrName + "=\'" + attr.getNodeValue() + "\']";
+				if (!(attrValue.trim().isEmpty())) {
+					expression = "//" + CDTConstants.DELETE
+							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+							+ attrName.toLowerCase() + "']='" + attrValue + "']";
 					System.out.println("\nNode expression :" + expression);
 					deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
 							XPathConstants.NODESET);
