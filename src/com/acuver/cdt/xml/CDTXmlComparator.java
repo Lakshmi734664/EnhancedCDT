@@ -29,7 +29,6 @@ public class CDTXmlComparator {
 
 	Document inputDoc = null;
 	Document outputDoc = null;
-	// Document processedInsertDeleteDoc = null;
 	Document updateDoc = null;
 	Document processedUpdateDoc = null;
 	Document processedUpdateEnhancedCompareDoc = null;
