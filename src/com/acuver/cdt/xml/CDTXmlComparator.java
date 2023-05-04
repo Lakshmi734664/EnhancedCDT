@@ -63,13 +63,13 @@ public class CDTXmlComparator {
 		CDTXmlDifferenceEvaluator.setPrimaryKeyName(primaryKeyName);
 
 		// Processing Insert/Delete Tags
-		 Document processedInsertDeleteDoc = removeInsertDeleteElementsWithPrimaryIssue(inputDoc);
+		Document processedInsertDeleteDoc = removeInsertDeleteElementsWithPrimaryIssue(inputDoc);
 
 		// Merge Insert/Delete To Update Doc
 		updateDoc = mergeInsertDeleteToUpdate(processedInsertDeleteDoc);
 
 		// Remove False Update
-		 processedUpdateDoc = removeFalseUpdates(updateDoc);
+		processedUpdateDoc = removeFalseUpdates(updateDoc);
 
 		// Create a new Processed document for Enhanced Compare with Root Element
 		processedUpdateEnhancedCompareDoc = db.newDocument();
@@ -412,7 +412,7 @@ public class CDTXmlComparator {
 				String oldValueAttrName = oldValueAttr.getNodeName();
 				String oldValueAttrValue = oldValueAttr.getNodeValue();
 				if (isSubXML(oldValueAttrName, oldValueAttrValue)) {
-					System.out.println("Attribute is Sub XML : " + oldValueAttrName);
+					System.out.println("The Attribute Value is a SUB-XML : " + oldValueAttrName);
 					Node updateNode = oldValueNode.getParentNode();
 					NamedNodeMap updateAttrList = updateNode.getAttributes();
 					Diff diff = null;
@@ -463,7 +463,7 @@ public class CDTXmlComparator {
 				String oldValueAttrName = oldValueAttr.getNodeName();
 				String oldValueAttrValue = oldValueAttr.getNodeValue();
 				if (isSubXML(oldValueAttrName, oldValueAttrValue)) {
-					System.out.println("Attribute is Sub XML : " + oldValueAttrName);
+					System.out.println("The Attribute Value is a SUB-XML : " + oldValueAttrName);
 					Node updateNode = oldValueNode.getParentNode();
 					NamedNodeMap updateAttrList = updateNode.getAttributes();
 					Diff diff = null;
@@ -546,6 +546,7 @@ public class CDTXmlComparator {
 					String updateAttrname = updateAttr.getNodeName();
 					String updateAttrValue = updateAttr.getNodeValue();
 					if (isSubXML(updateAttrname, updateAttrValue)) {
+						System.out.println("The Attribute Value is a SUB-XML : " + updateAttrname);
 						System.out.println("updateAttrname :" + updateAttrname);
 						attributeEle.setAttribute("Name", updateAttrname);
 					}
@@ -678,9 +679,9 @@ public class CDTXmlComparator {
 	}
 
 	// Checking if the Attribute is Sub XML
-	public boolean isSubXML(String name, String value) {
+	public boolean isSubXML(String attrName, String attrValue) {
 
-		return name.endsWith("XML") || name.endsWith("Xml");
+		return attrValue.startsWith("<?xml");
 	}
 
 	// Get Delete NodeList for Insert Node
