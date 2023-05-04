@@ -63,13 +63,13 @@ public class CDTXmlComparator {
 		CDTXmlDifferenceEvaluator.setPrimaryKeyName(primaryKeyName);
 
 		// Processing Insert/Delete Tags
-		Document processedInsertDeleteDoc = removeInsertDeleteElementsWithPrimaryIssue(inputDoc);
+		 Document processedInsertDeleteDoc = removeInsertDeleteElementsWithPrimaryIssue(inputDoc);
 
 		// Merge Insert/Delete To Update Doc
 		updateDoc = mergeInsertDeleteToUpdate(processedInsertDeleteDoc);
 
 		// Remove False Update
-		processedUpdateDoc = removeFalseUpdates(updateDoc);
+		 processedUpdateDoc = removeFalseUpdates(updateDoc);
 
 		// Create a new Processed document for Enhanced Compare with Root Element
 		processedUpdateEnhancedCompareDoc = db.newDocument();
@@ -286,7 +286,7 @@ public class CDTXmlComparator {
 			System.out.println("deleteNodeList length " + deleteNodeList.getLength());
 			for (int itr2 = 0; itr2 < deleteNodeList.getLength(); itr2++) {
 				Element deleteElement = (Element) deleteNodeList.item(itr2);
-				
+
 				boolean insertHasDifferences = false;
 				System.out.println("Comparing insertNode with deleteNode : ");
 
@@ -326,7 +326,8 @@ public class CDTXmlComparator {
 					insertHasDifferences = true;
 
 				} else {
-					System.out.println("No Difference In insertNode and deleteNode. Both Insert and Delete Nodes are removed.");
+					System.out.println(
+							"No Difference In insertNode and deleteNode. Both Insert and Delete Nodes are removed.");
 				}
 
 				if (insertHasDifferences) {
@@ -337,8 +338,16 @@ public class CDTXmlComparator {
 					for (int j = 0; j < attributes.getLength(); j++) {
 						Node attribute = attributes.item(j);
 						updateElement.setAttribute(attribute.getNodeName(), attribute.getNodeValue());
+
 					}
- 
+
+					String primaryKeyName = tablePrefix + "Key";
+					System.out.println(primaryKeyName);
+					String primaryKeyValue = deleteElement.getAttribute(primaryKeyName);
+					System.out.println(primaryKeyValue);
+
+					updateElement.setAttribute(primaryKeyName, primaryKeyValue);
+
 					doc.getDocumentElement().removeChild(insertElement);
 					doc.getDocumentElement().removeChild(deleteElement);
 					doc.getDocumentElement().appendChild(updateElement);
@@ -368,7 +377,7 @@ public class CDTXmlComparator {
 	public Element getChildElement(Element insert, String childName) {
 		NodeList childNodes = insert.getChildNodes();
 		Element childElement = null;
-		 // Look for existing child element and update it
+		// Look for existing child element and update it
 		for (int i = 0; i < childNodes.getLength(); i++) {
 			Node childNode = childNodes.item(i);
 			if (childNode.getNodeType() == Node.ELEMENT_NODE && childNode.getNodeName().equals(childName)) {
@@ -376,7 +385,7 @@ public class CDTXmlComparator {
 				break;
 			}
 		}
-		 // Create new child element if it doesn't exist
+		// Create new child element if it doesn't exist
 		if (childElement == null) {
 			Document doc = insert.getOwnerDocument();
 			childElement = doc.createElement(childName);
@@ -421,11 +430,11 @@ public class CDTXmlComparator {
 								Iterator<Difference> iter = diff.getDifferences().iterator();
 								while (iter.hasNext()) {
 									String subXmlDiffData = iter.next().toString();
-									System.out.println(subXmlDiffData);	
+									System.out.println(subXmlDiffData);
 								}
 							} else {
-									updateNode.getParentNode().removeChild(updateNode);
-									System.out.println("No Difference in Sub XML : ");
+								updateNode.getParentNode().removeChild(updateNode);
+								System.out.println("No Difference in Sub XML : ");
 							}
 						}
 					}
