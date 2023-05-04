@@ -226,45 +226,141 @@ public class CDTXmlComparator {
 		String tablePrefixLower = tablePrefix.toLowerCase();
 		String attrWithName = tablePrefixLower + "name";
 		String attrWithId = tablePrefixLower + "id";
+		String attrWithCode = tablePrefixLower + "code";
 		System.out.println("tablePrefixLower : " + tablePrefixLower);
-
-		NamedNodeMap attrList = deleteElement.getAttributes();
-		for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
-			Node attr = attrList.item(attrItr);
-			String attrName = attr.getNodeName();
-			String attrValue = attr.getNodeValue();
-			if (attrName.equalsIgnoreCase(tablePrefixLower)) {
-				if (!(attrValue.trim().isEmpty())) {
-					expression = "//" + CDTConstants.INSERT
-							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
-							+ attrName.toLowerCase() + "']='" + attrValue + "']";
-					System.out.println("\nNode expression :" + expression);
-					insertNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
-							XPathConstants.NODESET);
-				}
-				break;
-			} else if (attrName.equalsIgnoreCase(attrWithName)) {
-				if (!(attrValue.trim().isEmpty())) {
-					expression = "//" + CDTConstants.INSERT
-							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
-							+ attrName.toLowerCase() + "']='" + attrValue + "']";
-					System.out.println("\nNode expression :" + expression);
-					insertNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
-							XPathConstants.NODESET);
-				}
-				break;
-			} else if (attrName.equalsIgnoreCase(attrWithId)) {
-				if (!(attrValue.trim().isEmpty())) {
-					expression = "//" + CDTConstants.INSERT
-							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
-							+ attrName.toLowerCase() + "']='" + attrValue + "']";
-					System.out.println("\nNode expression :" + expression);
-					insertNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
-							XPathConstants.NODESET);
-				}
-				break;
-			}
+		String primaryKeyName = tablePrefix + "Key";
+		String primaryKeyValue = deleteElement.getAttribute(primaryKeyName);
+		System.out.println("primaryKeyValue in getDeletesForInsert() " + primaryKeyValue);
+		if (primaryKeyValue != null && !primaryKeyValue.isEmpty()) {
+			String expressionForPrimaryKey = "//" + CDTConstants.INSERT
+					+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+					+ primaryKeyName.toLowerCase() + "']='" + primaryKeyValue + "']";
+			System.out.println("\nNode expression For Primary Key :" + expressionForPrimaryKey);
+			insertNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expressionForPrimaryKey).evaluate(doc,
+					XPathConstants.NODESET);
 		}
+		if (insertNodeList == null || insertNodeList.getLength() == 0) {
+			System.out.println("No Delete Elements are not present for the Primary Key of Insert Element : ");
+			String organizationCode = "OrganizationCode";
+			String organizationCodeValue = deleteElement.getAttribute(organizationCode);
+			String processTypeKey = "ProcessTypeKey";
+			String processTypeKeyValue = deleteElement.getAttribute(processTypeKey);
+			NamedNodeMap attrList = deleteElement.getAttributes();
+			for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
+				Node attr = attrList.item(attrItr);
+				String attrName = attr.getNodeName();
+				String attrValue = attr.getNodeValue();
+				if (attrName.equalsIgnoreCase(tablePrefixLower)) {
+					if (!(attrValue.trim().isEmpty())) {
+						if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
+
+						} else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
+
+						} else {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "']";
+
+						}
+						System.out.println("\nNode expression :" + expression);
+						insertNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+								XPathConstants.NODESET);
+					}
+					break;
+				} else if (attrName.equalsIgnoreCase(attrWithName)) {
+					if (!(attrValue.trim().isEmpty())) {
+						if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
+
+						} else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
+
+						} else {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "']";
+						}
+						System.out.println("\nNode expression :" + expression);
+						insertNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+								XPathConstants.NODESET);
+					}
+					break;
+				} else if (attrName.equalsIgnoreCase(attrWithId)) {
+					if (!(attrValue.trim().isEmpty())) {
+						if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
+
+						} else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
+
+						} else {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "']";
+
+						}
+						System.out.println("\nNode expression :" + expression);
+						insertNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+								XPathConstants.NODESET);
+					}
+					break;
+				} else if (attrName.equalsIgnoreCase(attrWithCode)) {
+					if (!(attrValue.trim().isEmpty())) {
+						if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
+
+						} else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
+
+						} else {
+							expression = "//" + CDTConstants.INSERT
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "']";
+						}
+						System.out.println("\nNode expression :" + expression);
+						insertNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+								XPathConstants.NODESET);
+					}
+					break;
+				}
+			}
+
+		}
+		System.out.println("Insert NodeList Length in getInsertsForDelete() " + insertNodeList.getLength());
 
 		return insertNodeList;
 
@@ -692,46 +788,141 @@ public class CDTXmlComparator {
 		String tablePrefixLower = tablePrefix.toLowerCase();
 		String attrWithName = tablePrefixLower + "name";
 		String attrWithId = tablePrefixLower + "id";
+		String attrWithCode = tablePrefixLower + "code";
 		System.out.println("tablePrefixLower : " + tablePrefixLower);
-
-		NamedNodeMap attrList = insertElement.getAttributes();
-		for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
-			Node attr = attrList.item(attrItr);
-			String attrName = attr.getNodeName();
-			String attrValue = attr.getNodeValue();
-			if (attrName.equalsIgnoreCase(tablePrefixLower)) {
-				if (!(attrValue.trim().isEmpty())) {
-					expression = "//" + CDTConstants.DELETE
-							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
-							+ attrName.toLowerCase() + "']='" + attrValue + "']";
-					System.out.println("\nNode expression :" + expression);
-					deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
-							XPathConstants.NODESET);
-				}
-				break;
-			} else if (attrName.equalsIgnoreCase(attrWithName)) {
-				if (!(attrValue.trim().isEmpty())) {
-					expression = "//" + CDTConstants.DELETE
-							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
-							+ attrName.toLowerCase() + "']='" + attrValue + "']";
-					System.out.println("\nNode expression :" + expression);
-					deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
-							XPathConstants.NODESET);
-				}
-				break;
-			} else if (attrName.equalsIgnoreCase(attrWithId)) {
-				if (!(attrValue.trim().isEmpty())) {
-					expression = "//" + CDTConstants.DELETE
-							+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
-							+ attrName.toLowerCase() + "']='" + attrValue + "']";
-					System.out.println("\nNode expression :" + expression);
-					deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
-							XPathConstants.NODESET);
-				}
-				break;
-			}
+		String primaryKeyName = tablePrefix + "Key";
+		String primaryKeyValue = insertElement.getAttribute(primaryKeyName);
+		System.out.println("primaryKeyValue in getDeletesForInsert() " + primaryKeyValue);
+		if (primaryKeyValue != null && !primaryKeyValue.isEmpty()) {
+			String expressionForPrimaryKey = "//" + CDTConstants.DELETE
+					+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+					+ primaryKeyName.toLowerCase() + "']='" + primaryKeyValue + "']";
+			System.out.println("\nNode expression For Primary Key :" + expressionForPrimaryKey);
+			deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expressionForPrimaryKey).evaluate(doc,
+					XPathConstants.NODESET);
 		}
+		if (deleteNodeList == null || deleteNodeList.getLength() == 0) {
+			System.out.println("No Delete Elements are not present for the Primary Key of Insert Element : ");
+			String organizationCode = "OrganizationCode";
+			String organizationCodeValue = insertElement.getAttribute(organizationCode);
+			String processTypeKey = "ProcessTypeKey";
+			String processTypeKeyValue = insertElement.getAttribute(processTypeKey);
+			NamedNodeMap attrList = insertElement.getAttributes();
+			for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
+				Node attr = attrList.item(attrItr);
+				String attrName = attr.getNodeName();
+				String attrValue = attr.getNodeValue();
+				if (attrName.equalsIgnoreCase(tablePrefixLower)) {
+					if (!(attrValue.trim().isEmpty())) {
+						if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
 
+						} else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
+
+						} else {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "']";
+
+						}
+						System.out.println("\nNode expression :" + expression);
+						deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+								XPathConstants.NODESET);
+					}
+					break;
+				} else if (attrName.equalsIgnoreCase(attrWithName)) {
+					if (!(attrValue.trim().isEmpty())) {
+						if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
+
+						} else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
+
+						} else {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "']";
+						}
+						System.out.println("\nNode expression :" + expression);
+						deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+								XPathConstants.NODESET);
+					}
+					break;
+				} else if (attrName.equalsIgnoreCase(attrWithId)) {
+					if (!(attrValue.trim().isEmpty())) {
+						if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
+
+						} else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
+
+						} else {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "']";
+
+						}
+						System.out.println("\nNode expression :" + expression);
+						deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+								XPathConstants.NODESET);
+					}
+					break;
+				} else if (attrName.equalsIgnoreCase(attrWithCode)) {
+					if (!(attrValue.trim().isEmpty())) {
+						if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
+
+						} else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "' and "
+									+ "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
+
+						} else {
+							expression = "//" + CDTConstants.DELETE
+									+ "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+									+ attrName.toLowerCase() + "']='" + attrValue + "']";
+						}
+						System.out.println("\nNode expression :" + expression);
+						deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+								XPathConstants.NODESET);
+					}
+					break;
+				}
+			}
+
+		}
+		System.out.println("Delete NodeList Length in getDeletesForInsert() " + deleteNodeList.getLength());
 		return deleteNodeList;
 	}
 
