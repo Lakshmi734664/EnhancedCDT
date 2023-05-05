@@ -47,6 +47,7 @@ public class CDTFileReader {
 		EnhancedCDTMain.CDT_XMLS1 = prop.getProperty(CDTConstants.CDT_XMLS1);
 		EnhancedCDTMain.CDT_XMLS2 = prop.getProperty(CDTConstants.CDT_XMLS2);
 		EnhancedCDTMain.OUTPUT_DIR = prop.getProperty(CDTConstants.OUTPUT_DIR);
+		
 
 		if (EnhancedCDTMain.CDT_REPORT_DIR1 == null && EnhancedCDTMain.CDT_REPORT_DIR1.isEmpty()
 				|| EnhancedCDTMain.CDT_REPORT_DIR2 == null && EnhancedCDTMain.CDT_REPORT_DIR2.isEmpty()

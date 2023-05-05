@@ -1,24 +1,35 @@
 package com.acuver.cdt.xml;
 
 import java.io.File;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.Diff;
 import org.xmlunit.diff.Difference;
+
 import com.acuver.cdt.EnhancedCDTMain;
 import com.acuver.cdt.constants.CDTConstants;
 import com.acuver.cdt.file.CDTFileReader;
@@ -57,22 +68,30 @@ public class CDTXmlComparator {
 		CDTXmlDifferenceEvaluator.setPrimaryKeyName(primaryKeyName);
 
 		// Processing Insert/Delete Tags
-		Document processedInsertDeleteDoc = removeInsertDeleteElementsWithPrimaryIssue(inputDoc);
+		 Document processedInsertDeleteDoc =
+		removeInsertDeleteElementsWithPrimaryIssue(inputDoc);
+//
+//		// Merge Insert/Delete To Update Doc
+//		 updateDoc = mergeInsertDeleteToUpdate(processedInsertDeleteDoc);
+//
+//		// Remove False Update
+//		 processedUpdateDoc = removeFalseUpdates(updateDoc);
+//
+//		// Processing Update Doc with EnhancedCompare
+//		 Document processedUpdateEnhancedCompareDoc =
+//		 addEnhancedCompareToUpdates(processedUpdateDoc);
+//
+//		 moveUpdatesToManualReview(processedUpdateEnhancedCompareDoc);
+//
+//		 outputDoc = processedManualReviewDoc;
 
-		// Merge Insert/Delete To Update Doc
-		updateDoc = mergeInsertDeleteToUpdate(processedInsertDeleteDoc);
+	
 
-		// Remove False Update
-		processedUpdateDoc = removeFalseUpdates(updateDoc);
-
-		// Processing Update Doc with EnhancedCompare
-		Document processedUpdateEnhancedCompareDoc = addEnhancedCompareToUpdates(processedUpdateDoc);
-
-		moveUpdatesToManualReview(processedUpdateEnhancedCompareDoc);
-
-		outputDoc = processedManualReviewDoc;
-
-		return outputDoc;
+		Document removeDeleteTag = removeDeleteTags(processedInsertDeleteDoc);
+		
+		
+		//return outputDoc;
+		return removeDeleteTag;
 	}
 
 	// Get Table Primary Key Name
@@ -912,6 +931,36 @@ public class CDTXmlComparator {
 		}
 		System.out.println("Delete NodeList Length in getDeletesForInsert() " + deleteNodeList.getLength());
 		return deleteNodeList;
+	}
+
+	// remove delete tag from document
+	public Document removeDeleteTags(Document doc) throws Exception {
+
+		NodeList nodes = doc.getElementsByTagName("Delete");
+
+		for (int i = nodes.getLength() - 1; i >= 0; i--) {
+			Node node = nodes.item(i);
+			node.getParentNode().removeChild(node);
+		}
+
+		// Create a transformer to serialize the document to a string
+		Transformer transformer = EnhancedCDTMain.tf.newTransformer();
+		transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+		StringWriter writer = new StringWriter();
+		StreamResult result = new StreamResult(writer);
+		transformer.transform(new DOMSource(doc), result);
+
+		// Remove all blank lines from the serialized string
+		String xmlString = writer.toString();
+		Pattern pattern = Pattern.compile("(?m)^\\s*$[\n\r]{1,}", Pattern.MULTILINE);
+		xmlString = pattern.matcher(xmlString).replaceAll("");
+
+		// Parse the modified string back into a DOM document
+		DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();
+		InputSource inputSource = new InputSource(new StringReader(xmlString));
+		Document doc1 = builder.parse(inputSource);
+		return doc1;
+
 	}
 
 }

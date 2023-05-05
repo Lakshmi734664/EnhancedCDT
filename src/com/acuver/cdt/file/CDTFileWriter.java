@@ -29,7 +29,7 @@ import com.acuver.cdt.constants.CDTConstants;
 
 public class CDTFileWriter {
 
-	public String fullPath = "";
+	public static String fullPath = "";
 
 	public String createOutDir(String location) throws IOException {
 
@@ -92,7 +92,6 @@ public class CDTFileWriter {
 		} catch (Exception e) {
 			throw new RuntimeException("Error occurs when pretty-printing xml:\n" + sw.toString(), e);
 		}
-
 	}
 
 	public void createXMLFile(String fileLocation, String fileName, String fileData)

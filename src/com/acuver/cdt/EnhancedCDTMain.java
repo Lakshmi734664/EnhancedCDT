@@ -22,7 +22,7 @@ public class EnhancedCDTMain {
 	// Create a new DocumentBuilderFactory
 	public static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 	public static TransformerFactory tf = TransformerFactory.newInstance();
-
+	
 	public static String CDT_REPORT_DIR1 = null;
 	public static String CDT_REPORT_DIR2 = null;
 	public static String CDT_XMLS1 = null;
@@ -43,7 +43,10 @@ public class EnhancedCDTMain {
 			CDTFileWriter fileWriter = new CDTFileWriter();
 
 			fileReader.readPropertiesFile();
-
+			CDTConstants.fullPath = fileWriter.createOutDir(OUTPUT_DIR);
+			
+			CDT_REPORT_DIR1_OUT = CDTConstants.fullPath;
+			
 			System.out.println("CDT_REPORT_DIR1: " + CDT_REPORT_DIR1);
 
 			try {
@@ -52,8 +55,6 @@ public class EnhancedCDTMain {
 				if (filesList == null) {
 					System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
 				}
-
-				String fullPath = fileWriter.createOutDir(OUTPUT_DIR);
 
 				if (filesList != null && filesList.length > 0) {
 					for (File f : filesList) {
@@ -69,13 +70,13 @@ public class EnhancedCDTMain {
 								if (fileName.startsWith("YFS") || fileName.startsWith("PLT")) {
 
 									outputDoc = xmlComparator.cleanCompareReport(f);
-									fileWriter.fileWriterMethod(fullPath, outputDoc, fileName);
+									fileWriter.fileWriterMethod(CDTConstants.fullPath, outputDoc, fileName);
 
 								} else {
 
 									try {
 
-										fileWriter.copyFileToDirectory(f, fullPath);
+										fileWriter.copyFileToDirectory(f, CDTConstants.fullPath);
 									} catch (IOException e) {
 										System.out.println("An error occurred while copying the file.");
 										e.printStackTrace();

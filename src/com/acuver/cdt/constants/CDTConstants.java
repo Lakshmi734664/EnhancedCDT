@@ -16,5 +16,6 @@ public class CDTConstants {
 	public static final String OLDVALUES = "OldValues";
 	public static final String ID = "__ID__";
 	public static final String currentDirectory = System.getProperty("user.dir");
-
+	public static  String fullPath = null;
+    public static final String CDT_REPORT_DIR1_OUT = fullPath;
 }
