@@ -68,30 +68,25 @@ public class CDTXmlComparator {
 		CDTXmlDifferenceEvaluator.setPrimaryKeyName(primaryKeyName);
 
 		// Processing Insert/Delete Tags
-		 Document processedInsertDeleteDoc =
-		removeInsertDeleteElementsWithPrimaryIssue(inputDoc);
-//
-//		// Merge Insert/Delete To Update Doc
-//		 updateDoc = mergeInsertDeleteToUpdate(processedInsertDeleteDoc);
-//
-//		// Remove False Update
-//		 processedUpdateDoc = removeFalseUpdates(updateDoc);
-//
-//		// Processing Update Doc with EnhancedCompare
-//		 Document processedUpdateEnhancedCompareDoc =
-//		 addEnhancedCompareToUpdates(processedUpdateDoc);
-//
-//		 moveUpdatesToManualReview(processedUpdateEnhancedCompareDoc);
-//
-//		 outputDoc = processedManualReviewDoc;
+		Document processedInsertDeleteDoc = removeInsertDeleteElementsWithPrimaryIssue(inputDoc);
 
-	
+		// Merge Insert/Delete To Update Doc
+		updateDoc = mergeInsertDeleteToUpdate(processedInsertDeleteDoc);
+
+		// Remove False Update
+		processedUpdateDoc = removeFalseUpdates(updateDoc);
+
+		// Processing Update Doc with EnhancedCompare
+		Document processedUpdateEnhancedCompareDoc = addEnhancedCompareToUpdates(processedUpdateDoc);
+
+		moveUpdatesToManualReview(processedUpdateEnhancedCompareDoc);
+
+		outputDoc = processedManualReviewDoc;
 
 		Document removeDeleteTag = removeDeleteTags(processedInsertDeleteDoc);
-		
-		
-		//return outputDoc;
-		return removeDeleteTag;
+
+		return outputDoc;
+
 	}
 
 	// Get Table Primary Key Name
