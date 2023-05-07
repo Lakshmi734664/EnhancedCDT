@@ -1,16 +1,18 @@
 package com.acuver.cdt.file;
 
+import com.acuver.cdt.EnhancedCDTMain;
+import com.acuver.cdt.util.CDTConstants;
+import com.acuver.cdt.util.CDTHelper;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Properties;
-
-import com.acuver.cdt.EnhancedCDTMain;
-import com.acuver.cdt.constants.*;
+import java.util.stream.Collectors;
 
 public class CDTFileReader {
-
 	public void readPropertiesFile() throws Exception {
 
 		File enhancedcdtfile = new File(CDTConstants.currentDirectory + "/enhancedcdt.properties");
@@ -19,7 +21,7 @@ public class CDTFileReader {
 		CDTHelper helper = new CDTHelper();
 		if (!enhancedcdtfile.exists()) {
 			// Display message and exit if config file does not exist
-			helper.formPropertiesFileHelpMsg();
+			helper.showPropertiesFileHelpMsg();
 			System.exit(1);
 		}
 
@@ -53,10 +55,30 @@ public class CDTFileReader {
 				|| EnhancedCDTMain.CDT_REPORT_DIR2 == null && EnhancedCDTMain.CDT_REPORT_DIR2.isEmpty()
 				|| EnhancedCDTMain.CDT_XMLS1 == null && EnhancedCDTMain.CDT_XMLS1.isEmpty()
 				|| EnhancedCDTMain.CDT_XMLS2 == null && EnhancedCDTMain.CDT_XMLS2.isEmpty()) {
-			helper.formPropertiesFileHelpMsg();
+			helper.showPropertiesFileHelpMsg();
 			System.exit(1);
 		}
 
+	}
+
+	public void populateRecordIdentifier()
+	{
+		Properties properties = new Properties();
+
+		try {
+			properties.load( new FileInputStream("recordIdentifier.config"));
+		} catch (Exception e) {
+
+		}
+		EnhancedCDTMain.recordIdentifierMap.putAll(properties.entrySet()
+				.stream()
+				.collect(Collectors.toMap(e -> e.getKey().toString(),
+						e -> e.getValue().toString())));
+	}
+
+	public ArrayList<String> readYDKPrefs(String ydkperfs)
+	{
+		return new ArrayList<String>();
 	}
 
 	public File[] readFilesFromDir(String directory) {
@@ -85,5 +107,4 @@ public class CDTFileReader {
 		}
 		return fileData;
 	}
-
 }

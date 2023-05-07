@@ -1,236 +1,239 @@
 package com.acuver.cdt.file;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
+import com.acuver.cdt.EnhancedCDTMain;
+import com.acuver.cdt.util.CDTConstants;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import com.acuver.cdt.EnhancedCDTMain;
-import com.acuver.cdt.constants.CDTConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class CDTFileWriter {
 
-	public static String fullPath = "";
+    public static String fullPath = "";
 
-	public String createOutDir(String location) throws IOException {
+    public void appendXmlFile(File sourceFile, File destFile) {
+        try {
 
-		String timeStamp = new SimpleDateFormat(CDTConstants.dateFormat).format(new Date());
+            // Create a new DocumentBuilderFactory
 
-		if (location == null) {
+            // Use the factory to create a new DocumentBuilder
+            DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();
 
-			fullPath = CDTConstants.currentDirectory + "//" + timeStamp;
+            // Parse the source file to create a new Document object
+            Document sourceDoc = builder.parse(sourceFile);
 
-			createDirectory(fullPath + "\\manual");
+            // Parse the destination file to create a new Document object
+            Document destDoc = builder.parse(destFile);
 
-		} else {
+            // Find the root element of the destination document
+            Element destRootElement = destDoc.getDocumentElement();
 
-			fullPath = location + "//" + timeStamp;
+            // Import the nodes from the source document into the destination document
+            NodeList sourceNodes = sourceDoc.getDocumentElement().getChildNodes();
+            for (int i = 0; i < sourceNodes.getLength(); i++) {
+                Node importedNode = destDoc.importNode(sourceNodes.item(i), true);
+                destRootElement.appendChild(importedNode);
+            }
 
-			createDirectory(fullPath + "\\manual");
-		}
+            // Write the modified document back to the destination file
+            Transformer transformer = EnhancedCDTMain.tf.newTransformer();
+            DOMSource source = new DOMSource(destDoc);
+            StreamResult result = new StreamResult(destFile);
+            transformer.transform(source, result);
 
-		return fullPath;
-	}
+            System.out.println("XML file appended successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	// Writing File to a Directory
-	public void fileWriterMethod(String fullPath, Document outputDoc, String fileName) throws Exception {
-		try {
-			final String fileData = convertDocumentToString(outputDoc);
+    public String createOutDir(String location) throws IOException {
 
-			createXMLFile(fullPath, fileName, fileData);
-			System.out.println("OUTPUT DIR:" + fullPath);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+        String timeStamp = new SimpleDateFormat(CDTConstants.dateFormat).format(new Date());
 
-	public String convertDocumentToString(Document document) throws Exception {
+        if (location == null) {
 
-		Transformer transformer = EnhancedCDTMain.tf.newTransformer();
-		StringWriter sw = new StringWriter();
-		transformer.transform(new DOMSource(document), new StreamResult(sw));
+            fullPath = CDTConstants.currentDirectory + "//" + timeStamp;
 
-		try {
-			// create a new transformer factory and set the formatting properties
-			EnhancedCDTMain.tf.setAttribute("indent-number", 4);
+            createDirectory(fullPath + "\\manual");
 
-			// create a new transformer and set the formatting properties
-			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        } else {
 
-			// create a new DOM source from the XML string
-			DOMSource source = new DOMSource(DocumentBuilderFactory.newInstance().newDocumentBuilder()
-					.parse(new InputSource(new StringReader(sw.toString()))));
+            fullPath = location + "//" + timeStamp;
 
-			// create a new string writer to store the formatted XML
-			StringWriter writer = new StringWriter();
+            createDirectory(fullPath + "\\manual");
+        }
 
-			// transform the DOM source to a string writer with the transformer
-			transformer.transform(source, new StreamResult(writer));
+        return fullPath;
+    }
 
-			// return the formatted XML as a string
-			return writer.toString();
-		} catch (Exception e) {
-			throw new RuntimeException("Error occurs when pretty-printing xml:\n" + sw.toString(), e);
-		}
-	}
+    // Writing File to a Directory
+    public void writeFile(String fullPath, Document outputDoc, String fileName) throws Exception {
+        try {
+            String fileData = convertDocumentToString(outputDoc);
+            createXMLFile(fullPath, fileName, fileData);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	public void createXMLFile(String fileLocation, String fileName, String fileData)
-			throws IllegalArgumentException, IOException {
-		FileWriter writer = null;
-		try {
+    public String convertDocumentToString(Document document) throws Exception {
 
-			if (fileData == "") {
-				throw new Exception("No file data given\r\n" + "Please give the filedata.");
-			} else if (fileLocation == "") {
-				throw new Exception("File location is missing.");
-			} else if (fileName == "") {
-				throw new Exception("Filename is missing.");
-			} else {
-				// Create a new file object with the specified file location and name
-				File file = new File(fileLocation + File.separator + fileName);
+        Transformer transformer = EnhancedCDTMain.tf.newTransformer();
+        StringWriter sw = new StringWriter();
+        transformer.transform(new DOMSource(document), new StreamResult(sw));
 
-				// Create a new FileWriter object to write to the file
-				writer = new FileWriter(file);
+        try {
+            // create a new transformer factory and set the formatting properties
+            EnhancedCDTMain.tf.setAttribute("indent-number", 4);
 
-				// Write the file data to the file
-				writer.write(fileData);
+            // create a new transformer and set the formatting properties
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-				System.out.println("File created successfully!");
-			}
-		} catch (Exception e) {
-			System.out.println("Caught an exception: " + e.getMessage());
-		} finally {
-			// Close the writer
-			writer.close();
-		}
+            // create a new DOM source from the XML string
+            DOMSource source = new DOMSource(EnhancedCDTMain.factory.newInstance().newDocumentBuilder()
+                    .parse(new InputSource(new StringReader(sw.toString()))));
 
-	}
+            // create a new string writer to store the formatted XML
+            StringWriter writer = new StringWriter();
 
-	public void createDirectory(String path) {
+            // transform the DOM source to a string writer with the transformer
+            transformer.transform(source, new StreamResult(writer));
 
-		try {
-			File directory = new File(path);
+            // return the formatted XML as a string
+            return writer.toString().replaceAll("\\n\\s*\\n", "\n");
+        } catch (Exception e) {
+            throw new RuntimeException("Error occurs when pretty-printing xml:\n" + sw.toString(), e);
+        }
+    }
 
-			// Create the directory if it doesn't exist
-			if (!directory.exists()) {
-				boolean success = directory.mkdirs();
-				if (success) {
-					System.out.println("Directory created successfully: " + path);
-				} else {
-					System.out.println("Failed to create directory: " + path);
-				}
-			}
-		} catch (Exception e) {
-			System.out.println("Caught an exception: " + e.getMessage());
-		}
-	}
+/*
+    public String convertDocumentToString(Document document) throws Exception {
+        Transformer trans = EnhancedCDTMain.tf.newTransformer();
+        StringWriter sw = new StringWriter();
+        trans.transform(new DOMSource(document), new StreamResult(sw));
+        return sw.toString().replaceAll("\\n\\s*\\n", "\n");
+    }
+*/
+    public void createXMLFile(String fileLocation, String fileName, String fileData) throws IllegalArgumentException, IOException {
+        FileWriter writer = null;
+        try {
 
-	public void copyFileToDirectory(File sourceFile, String destinationDirectory) throws IOException {
-		if (!sourceFile.exists()) {
-			throw new IllegalArgumentException("Source file " + sourceFile.getAbsolutePath() + " does not exist.");
-		}
+            if (fileData == "") {
+                throw new Exception("No file data given\r\n" + "Please give the filedata.");
+            } else if (fileLocation == "") {
+                throw new Exception("File location is missing.");
+            } else if (fileName == "") {
+                throw new Exception("Filename is missing.");
+            } else {
+                // Create a new file object with the specified file location and name
+                File file = new File(fileLocation + File.separator + fileName);
 
-		if (!sourceFile.isFile()) {
-			throw new IllegalArgumentException("Source " + sourceFile.getAbsolutePath() + " is not a file.");
-		}
+                // If file doesn't exists, then create it
+                if (!file.exists()) {
+                    file.createNewFile();
+                }
 
-		Path destinationDirPath = Paths.get(destinationDirectory);
-		if (!destinationDirPath.toFile().exists()) {
-			Files.createDirectories(destinationDirPath);
-		}
+                // Create a new FileWriter object to write to the file
+                writer = new FileWriter(file);
 
-		Path destinationPath = Paths.get(destinationDirectory, sourceFile.getName());
-		Files.copy(sourceFile.toPath(), destinationPath);
-	}
+                // Write the file data to the file
+                writer.write(fileData);
 
-	public void mergeAfterReview(String manualFolderName, String parentFolderName) {
-		File manualFolder = new File(manualFolderName);
-		File parentFolder = new File(parentFolderName);
+                System.out.println("File created successfully!");
+            }
+        } catch (Exception e) {
+            System.out.println("Caught an exception: " + e.getMessage());
+        } finally {
+            // Close the writer
+            writer.close();
 
-		if (!manualFolder.isDirectory()) {
-			System.err.println("Error: Manual folder name is not a directory.");
-			return;
-		}
+        }
 
-		if (!parentFolder.isDirectory()) {
-			System.err.println("Error: Parent folder name is not a directory.");
-			return;
-		}
+    }
 
-		for (File sourceFile : manualFolder.listFiles()) {
-			if (sourceFile.isFile()) {
-				File destFile = new File(parentFolder, sourceFile.getName());
-				if (destFile.exists()) {
-					try {
-						Path sourceFilePath = Paths.get(sourceFile.getPath());
-						Path destFilePath = Paths.get(destFile.getPath());
+    public void createDirectory(String path) {
 
-						appendXmlFile(sourceFilePath.toFile(), destFilePath.toFile());
+        try {
+            File directory = new File(path);
 
-						System.out.println("Copied " + sourceFile.getPath() + " to " + destFile.getPath());
-					} catch (Exception e) {
-						System.err.println("Error copying file: " + e.getMessage());
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-	}
+            // Create the directory if it doesn't exist
+            if (!directory.exists()) {
+                boolean success = directory.mkdirs();
+                if (success) {
+                    System.out.println("Directory created successfully: " + path);
+                } else {
+                    System.out.println("Failed to create directory: " + path);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Caught an exception: " + e.getMessage());
+        }
+    }
 
-	public static void appendXmlFile(File sourceFile, File destFile) {
-		try {
+    public void copyFileToDirectory(File sourceFile, String destinationDirectory) throws IOException {
+        if (!sourceFile.exists()) {
+            throw new IllegalArgumentException("Source file " + sourceFile.getAbsolutePath() + " does not exist.");
+        }
 
-			// Create a new DocumentBuilderFactory
+        if (!sourceFile.isFile()) {
+            throw new IllegalArgumentException("Source " + sourceFile.getAbsolutePath() + " is not a file.");
+        }
 
-			// Use the factory to create a new DocumentBuilder
-			DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();
+        Path destinationDirPath = Paths.get(destinationDirectory);
+        if (!destinationDirPath.toFile().exists()) {
+            Files.createDirectories(destinationDirPath);
+        }
+        Path destinationPath = Paths.get(destinationDirectory, sourceFile.getName());
+        Files.copy(sourceFile.toPath(), destinationPath);
+    }
 
-			// Parse the source file to create a new Document object
-			Document sourceDoc = builder.parse(sourceFile);
+    public void mergeAfterReview(String manualFolderName, String parentFolderName) {
+        File manualFolder = new File(manualFolderName);
+        File parentFolder = new File(parentFolderName);
 
-			// Parse the destination file to create a new Document object
-			Document destDoc = builder.parse(destFile);
+        if (!manualFolder.isDirectory()) {
+            System.err.println("Error: Manual folder name is not a directory.");
+            return;
+        }
 
-			// Find the root element of the destination document
-			Element destRootElement = destDoc.getDocumentElement();
+        if (!parentFolder.isDirectory()) {
+            System.err.println("Error: Parent folder name is not a directory.");
+            return;
+        }
 
-			// Import the nodes from the source document into the destination document
-			NodeList sourceNodes = sourceDoc.getDocumentElement().getChildNodes();
-			for (int i = 0; i < sourceNodes.getLength(); i++) {
-				Node importedNode = destDoc.importNode(sourceNodes.item(i), true);
-				destRootElement.appendChild(importedNode);
-			}
+        for (File sourceFile : manualFolder.listFiles()) {
+            if (sourceFile.isFile()) {
+                File destFile = new File(parentFolder, sourceFile.getName());
+                if (destFile.exists()) {
+                    try {
+                        Path sourceFilePath = Paths.get(sourceFile.getPath());
+                        Path destFilePath = Paths.get(destFile.getPath());
 
-			// Write the modified document back to the destination file
-			Transformer transformer = EnhancedCDTMain.tf.newTransformer();
-			DOMSource source = new DOMSource(destDoc);
-			StreamResult result = new StreamResult(destFile);
-			transformer.transform(source, result);
+                        appendXmlFile(sourceFilePath.toFile(), destFilePath.toFile());
 
-			System.out.println("XML file appended successfully.");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+                        System.out.println("Copied " + sourceFile.getPath() + " to " + destFile.getPath());
+                    } catch (Exception e) {
+                        System.err.println("Error copying file: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
 
 }
