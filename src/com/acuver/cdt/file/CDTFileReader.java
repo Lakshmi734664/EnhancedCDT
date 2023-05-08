@@ -3,7 +3,6 @@ package com.acuver.cdt.file;
 import com.acuver.cdt.EnhancedCDTMain;
 import com.acuver.cdt.util.CDTConstants;
 import com.acuver.cdt.util.CDTHelper;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -11,6 +10,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.stream.Collectors;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.xpath.XPathConstants;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 public class CDTFileReader {
 	public void readPropertiesFile() throws Exception {
@@ -49,7 +53,6 @@ public class CDTFileReader {
 		EnhancedCDTMain.CDT_XMLS1 = prop.getProperty(CDTConstants.CDT_XMLS1);
 		EnhancedCDTMain.CDT_XMLS2 = prop.getProperty(CDTConstants.CDT_XMLS2);
 		EnhancedCDTMain.OUTPUT_DIR = prop.getProperty(CDTConstants.OUTPUT_DIR);
-		
 
 		if (EnhancedCDTMain.CDT_REPORT_DIR1 != null && EnhancedCDTMain.CDT_REPORT_DIR1.trim().isEmpty()
 				|| EnhancedCDTMain.CDT_REPORT_DIR2 != null && EnhancedCDTMain.CDT_REPORT_DIR2.trim().isEmpty()
@@ -61,24 +64,47 @@ public class CDTFileReader {
 
 	}
 
-	public void populateRecordIdentifier()
-	{
+	public void populateRecordIdentifier() {
 		Properties properties = new Properties();
 
 		try {
-			properties.load( new FileInputStream("recordIdentifier.config"));
+			properties.load(new FileInputStream("recordIdentifier.config"));
 		} catch (Exception e) {
 
 		}
-		EnhancedCDTMain.recordIdentifierMap.putAll(properties.entrySet()
-				.stream()
-				.collect(Collectors.toMap(e -> e.getKey().toString(),
-						e -> e.getValue().toString())));
+		EnhancedCDTMain.recordIdentifierMap.putAll(properties.entrySet().stream()
+				.collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString())));
 	}
 
-	public ArrayList<String> readYDKPrefs(String ydkperfs)
-	{
-		return new ArrayList<String>();
+	public ArrayList<String> readYDKPrefs(String ydkperfs) throws Exception {
+
+		File[] ydfPref1FilesList = readFilesFromDir(ydkperfs);
+		ArrayList<String> tableNamesList = new ArrayList<String>();
+		if (ydfPref1FilesList != null && ydfPref1FilesList.length > 0) {
+			for (File file : ydfPref1FilesList) {
+				if (file != null && file.length() > 0) {
+					DocumentBuilder db = null;
+					db = EnhancedCDTMain.factory.newDocumentBuilder();
+					Document doc = null;
+					doc = db.parse(file);
+					String expression = "//" + "Ignore" + "//" + "Table";
+					NodeList nodeList = null;
+					nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+							XPathConstants.NODESET);
+					System.out.println("nodeList Length: " + nodeList.getLength());
+					for (int itr = 0; itr < nodeList.getLength(); itr++) {
+						Element tableElement = (Element) nodeList.item(itr);
+						String tableName = tableElement.getAttribute("Name");
+						if (tableName != null && !tableName.isEmpty()) {
+							tableName = tableName + ".xml";
+							tableNamesList.add(tableName);
+						}
+					}
+					System.out.println("tableNamesList : " + tableNamesList.toString());
+				}
+			}
+		}
+		return tableNamesList;
 	}
 
 	public File[] readFilesFromDir(String directory) {
