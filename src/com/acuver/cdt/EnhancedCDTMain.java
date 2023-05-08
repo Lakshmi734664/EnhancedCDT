@@ -64,8 +64,10 @@ public class EnhancedCDTMain {
 
 	private static void mergeCDTReports(CDTFileReader fileReader, CDTFileWriter fileWriter) throws Exception {
 		try {
-
-			ydkPerf1IgnoreTables = fileReader.readYDKPrefs(YDKPREF1);
+			
+			if (YDKPREF1 != null && !YDKPREF1.trim().isEmpty()) {
+				ydkPerf1IgnoreTables = fileReader.readYDKPrefs(YDKPREF1);
+			}
 
 			File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR1);
 			if (filesList == null) {
