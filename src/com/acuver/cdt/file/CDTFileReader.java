@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class CDTFileReader {
 	public void readPropertiesFile() throws Exception {
 
-		File enhancedcdtfile = new File(CDTConstants.currentDirectory + "/enhancedcdt.properties");
+		File enhancedcdtfile = new File(CDTConstants.currentDirectory +File.separator+"enhancedcdt.properties");
 		Properties prop = null;
 
 		CDTHelper helper = new CDTHelper();
@@ -51,10 +51,10 @@ public class CDTFileReader {
 		EnhancedCDTMain.OUTPUT_DIR = prop.getProperty(CDTConstants.OUTPUT_DIR);
 		
 
-		if (EnhancedCDTMain.CDT_REPORT_DIR1 == null && EnhancedCDTMain.CDT_REPORT_DIR1.isEmpty()
-				|| EnhancedCDTMain.CDT_REPORT_DIR2 == null && EnhancedCDTMain.CDT_REPORT_DIR2.isEmpty()
-				|| EnhancedCDTMain.CDT_XMLS1 == null && EnhancedCDTMain.CDT_XMLS1.isEmpty()
-				|| EnhancedCDTMain.CDT_XMLS2 == null && EnhancedCDTMain.CDT_XMLS2.isEmpty()) {
+		if (EnhancedCDTMain.CDT_REPORT_DIR1 != null && EnhancedCDTMain.CDT_REPORT_DIR1.trim().isEmpty()
+				|| EnhancedCDTMain.CDT_REPORT_DIR2 != null && EnhancedCDTMain.CDT_REPORT_DIR2.trim().isEmpty()
+				|| EnhancedCDTMain.CDT_XMLS1 != null && EnhancedCDTMain.CDT_XMLS1.trim().isEmpty()
+				|| EnhancedCDTMain.CDT_XMLS2 != null && EnhancedCDTMain.CDT_XMLS2.trim().isEmpty()) {
 			helper.showPropertiesFileHelpMsg();
 			System.exit(1);
 		}

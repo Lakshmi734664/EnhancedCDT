@@ -22,7 +22,7 @@ import java.util.Date;
 
 public class CDTFileWriter {
 
-    public static String fullPath = "";
+   
 
     public void appendXmlFile(File sourceFile, File destFile) {
         try {
@@ -62,19 +62,22 @@ public class CDTFileWriter {
 
     public String createOutDir(String location) throws IOException {
 
+    	 String fullPath = "";
+    	 
         String timeStamp = new SimpleDateFormat(CDTConstants.dateFormat).format(new Date());
 
         if (location == null) {
 
-            fullPath = CDTConstants.currentDirectory + "//" + timeStamp;
+            fullPath = CDTConstants.currentDirectory + File.separator  + timeStamp;
 
-            createDirectory(fullPath + "\\manual");
-
+            createDirectory(fullPath +File.separator +"manual");
+            createDirectory(fullPath +File.separator +"enhancedcompare");
         } else {
 
-            fullPath = location + "//" + timeStamp;
+            fullPath = location + File.separator + timeStamp;
 
-            createDirectory(fullPath + "\\manual");
+            createDirectory(fullPath+File.separator +"manual");
+            createDirectory(fullPath +File.separator +"enhancedcompare");
         }
 
         return fullPath;
@@ -202,7 +205,9 @@ public class CDTFileWriter {
         Files.copy(sourceFile.toPath(), destinationPath);
     }
 
-    public void mergeAfterReview(String manualFolderName, String parentFolderName) {
+    public void mergeAfterReview( String parentFolderName) {
+    	
+    	String manualFolderName = parentFolderName + "\\manual";
         File manualFolder = new File(manualFolderName);
         File parentFolder = new File(parentFolderName);
 

@@ -4,6 +4,8 @@ import com.acuver.cdt.file.CDTFileReader;
 import com.acuver.cdt.file.CDTFileWriter;
 import com.acuver.cdt.util.CDTHelper;
 import com.acuver.cdt.xml.CDTXmlComparator;
+import com.acuver.cdt.xml.RecordIdentifer;
+import com.acuver.*;
 import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -55,7 +57,7 @@ public class EnhancedCDTMain {
                     break;
                 case "--mergeManualReview":
                     fileReader.readPropertiesFile();
-                    fileWriter.mergeAfterReview("D:\\Parent\\manual", "D:\\Parent");
+                    fileWriter.mergeAfterReview( CDT_REPORT_DIR2_OUT);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -113,6 +115,9 @@ public class EnhancedCDTMain {
 
     private static void processFile(File f, String outDir, CDTFileReader fileReader, CDTFileWriter fileWriter) throws Exception {
         DocumentBuilder documentBuilder = factory.newDocumentBuilder();
+        
+        if(f.isFile()) {
+        
         if (f != null && f.length() > 0) {
             System.out.println("The files in the CDT_REPORT_DIR1 are " + f.getName());
             String fileName = f.getName();
@@ -142,5 +147,8 @@ public class EnhancedCDTMain {
                 e.printStackTrace();
             }
         }
+       
+       }
+        
     }
 }
