@@ -29,8 +29,8 @@ public class EnhancedCDTMain {
     public static String OUTPUT_DIR = null;
     public static String YDKPREF1 = null;
     public static String YDKPREF2 = null;
-    public static ArrayList ydkPerf1IgnoreTables = null;
-    public static ArrayList ydkPerf2IgnoreTables = null;
+    public static ArrayList<String> ydkPerf1IgnoreTables = null;
+    public static ArrayList<String> ydkPerf2IgnoreTables = null;
     //merged reports directories
     public static String CDT_REPORT_DIR1_OUT = null;
     public static String CDT_REPORT_DIR2_OUT = null;
@@ -64,35 +64,9 @@ public class EnhancedCDTMain {
 
     private static void mergeCDTReports(CDTFileReader fileReader, CDTFileWriter fileWriter) throws Exception {
         try {
-            ArrayList<String> tableNamesList = new ArrayList<String>();
-/*
-            File[] ydfPref1FilesList = fileReader.readFilesFromDir(YDKPREF1);
+   
+            ydkPerf1IgnoreTables = fileReader.readYDKPrefs(YDKPREF1);
 
-
-            if (ydfPref1FilesList != null && ydfPref1FilesList.length > 0) {
-                for (File file : ydfPref1FilesList) {
-                    if (file != null && file.length() > 0) {
-                        DocumentBuilder db = null;
-                        db = factory.newDocumentBuilder();
-                        Document doc = null;
-                        doc = db.parse(file);
-                        String expression = "//" + "Ignore" + "//" + "Table";
-                        NodeList nodeList = null;
-                        nodeList = (NodeList) xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-                        System.out.println("nodeList Length: " + nodeList.getLength());
-                        for (int itr = 0; itr < nodeList.getLength(); itr++) {
-                            Element tableElement = (Element) nodeList.item(itr);
-                            String tableName = tableElement.getAttribute("Name");
-                            if (tableName != null && !tableName.isEmpty()) {
-                                tableName = tableName + ".xml";
-                                tableNamesList.add(tableName);
-                            }
-                        }
-                        System.out.println("tableNamesList : " + tableNamesList.toString());
-                    }
-                }
-            }
-            */
             File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR1);
             if (filesList == null) {
                 System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
