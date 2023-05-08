@@ -19,7 +19,7 @@ import org.w3c.dom.NodeList;
 public class CDTFileReader {
 	public void readPropertiesFile() throws Exception {
 
-		File enhancedcdtfile = new File(CDTConstants.currentDirectory +File.separator+"enhancedcdt.properties");
+		File enhancedcdtfile = new File(CDTConstants.currentDirectory + File.separator+"enhancedcdt.properties");
 		Properties prop = null;
 
 		CDTHelper helper = new CDTHelper();

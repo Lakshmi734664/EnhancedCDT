@@ -22,8 +22,6 @@ import java.util.Date;
 
 public class CDTFileWriter {
 
-   
-
     public void appendXmlFile(File sourceFile, File destFile) {
         try {
 
