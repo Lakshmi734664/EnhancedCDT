@@ -18,103 +18,106 @@ import java.util.Map;
 
 public class EnhancedCDTMain {
 
-    public static XPath xPath = XPathFactory.newInstance().newXPath();
-    public static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    public static TransformerFactory tf = TransformerFactory.newInstance();
-    //properties
-    public static String CDT_REPORT_DIR1 = null;
-    public static String CDT_REPORT_DIR2 = null;
-    public static String CDT_XMLS1 = null;
-    public static String CDT_XMLS2 = null;
-    public static String OUTPUT_DIR = null;
-    public static String YDKPREF1 = null;
-    public static String YDKPREF2 = null;
-    public static ArrayList<String> ydkPerf1IgnoreTables = null;
-    public static ArrayList<String> ydkPerf2IgnoreTables = null;
-    //merged reports directories
-    public static String CDT_REPORT_DIR1_OUT = null;
-    public static String CDT_REPORT_DIR2_OUT = null;
-    public static Map<String,String>  recordIdentifierMap;
+	public static XPath xPath = XPathFactory.newInstance().newXPath();
+	public static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+	public static TransformerFactory tf = TransformerFactory.newInstance();
+	// properties
+	public static String CDT_REPORT_DIR1 = null;
+	public static String CDT_REPORT_DIR2 = null;
+	public static String CDT_XMLS1 = null;
+	public static String CDT_XMLS2 = null;
+	public static String OUTPUT_DIR = null;
+	public static String YDKPREF1 = null;
+	public static String YDKPREF2 = null;
+	public static ArrayList<String> ydkPerf1IgnoreTables = null;
+	public static ArrayList<String> ydkPerf2IgnoreTables = null;
+	// merged reports directories
+	public static String CDT_REPORT_DIR1_OUT = null;
+	public static String CDT_REPORT_DIR2_OUT = null;
+	public static Map<String, String> recordIdentifierMap;
 
-    public static void main(String[] argMode) throws Exception {
-        try {
-            factory.setIgnoringElementContentWhitespace(true);
-            CDTFileReader fileReader = new CDTFileReader();
-            CDTFileWriter fileWriter = new CDTFileWriter();
+	public static void main(String[] argMode) throws Exception {
+		try {
+			factory.setIgnoringElementContentWhitespace(true);
+			CDTFileReader fileReader = new CDTFileReader();
+			CDTFileWriter fileWriter = new CDTFileWriter();
 
-            String mode = argMode.length > 0 ? argMode[0] : "--merge";
+			String mode = argMode.length > 0 ? argMode[0] : "--merge";
 
-            switch (mode) {
-                case "--help":
-                    new CDTHelper().showPropertiesFileHelpMsg();
-                    break;
-                case "--merge":
-                    fileReader.readPropertiesFile();
-                   // fileReader.populateRecordIdentifier();
-                    mergeCDTReports(fileReader, fileWriter);
-                    break;
-                case "--mergeManualReview":
-                    fileReader.readPropertiesFile();
-                    fileWriter.mergeAfterReview("D:\\Parent\\manual", "D:\\Parent");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+			switch (mode) {
+			case "--help":
+				new CDTHelper().showPropertiesFileHelpMsg();
+				break;
+			case "--merge":
+				fileReader.readPropertiesFile();
+				// fileReader.populateRecordIdentifier();
+				mergeCDTReports(fileReader, fileWriter);
+				break;
+			case "--mergeManualReview":
+				fileReader.readPropertiesFile();
+				fileWriter.mergeAfterReview("D:\\Parent\\manual", "D:\\Parent");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
-    private static void mergeCDTReports(CDTFileReader fileReader, CDTFileWriter fileWriter) throws Exception {
-        try {
-   
-            ydkPerf1IgnoreTables = fileReader.readYDKPrefs(YDKPREF1);
+	private static void mergeCDTReports(CDTFileReader fileReader, CDTFileWriter fileWriter) throws Exception {
+		try {
 
-            File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR1);
-            if (filesList == null) {
-                System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
-            }
-            if (filesList != null && filesList.length > 0) {
-                CDT_REPORT_DIR1_OUT = fileWriter.createOutDir(OUTPUT_DIR);
+			ydkPerf1IgnoreTables = fileReader.readYDKPrefs(YDKPREF1);
 
-                for (File f : filesList) {
-                    processFile(f, CDT_REPORT_DIR1_OUT, fileReader, fileWriter);
-                }
+			File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR1);
+			if (filesList == null) {
+				System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
+			}
+			if (filesList != null && filesList.length > 0) {
+				CDT_REPORT_DIR1_OUT = fileWriter.createOutDir(OUTPUT_DIR);
 
-            }
+				for (File f : filesList) {
+					processFile(f, CDT_REPORT_DIR1_OUT, fileReader, fileWriter);
+				}
 
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        }
-    }
+			}
 
-    private static void processFile(File f, String outDir, CDTFileReader fileReader, CDTFileWriter fileWriter) throws Exception {
-        DocumentBuilder documentBuilder = factory.newDocumentBuilder();
-        if (f != null && f.length() > 0) {
-            System.out.println("The files in the CDT_REPORT_DIR1 are " + f.getName());
-            String fileName = f.getName();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		}
+	}
 
-            try {
-                if (ydkPerf1IgnoreTables==null || !(ydkPerf1IgnoreTables.contains(fileName))) {
-                    System.out.println("YDKPREF1 Table Names List is Empty or YDKPREF1 Table Names List does not contains the File Name : " + fileName);
-                    if (fileName.startsWith("YFS") || fileName.startsWith("PLT")) {
-                        CDTXmlComparator xmlComparator = new CDTXmlComparator();
-                        xmlComparator.setInputDoc(documentBuilder.parse(f));
-                        xmlComparator.setOutDir(outDir);
-                        xmlComparator.setFileReader(fileReader);
-                        xmlComparator.setFileWriter(fileWriter);
-                        Document outputDoc = xmlComparator.merge();
-                        fileWriter.writeFile(outDir, outputDoc, fileName);
-                    } else {
-                        try {
-                            fileWriter.copyFileToDirectory(f, outDir);
-                        } catch (IOException e) {
-                            System.out.println("An error occurred while copying the file.");
-                            e.printStackTrace();
-                        }
-                    }
-                }
+	private static void processFile(File f, String outDir, CDTFileReader fileReader, CDTFileWriter fileWriter)
+			throws Exception {
+		DocumentBuilder documentBuilder = factory.newDocumentBuilder();
+		if (f != null && f.length() > 0) {
+			System.out.println("The files in the CDT_REPORT_DIR1 are " + f.getName());
+			String fileName = f.getName();
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
+			try {
+				if (ydkPerf1IgnoreTables == null || !(ydkPerf1IgnoreTables.contains(fileName))) {
+					System.out.println(
+							"YDKPREF1 Table Names List is Empty or YDKPREF1 Table Names List does not contains the File Name : "
+									+ fileName);
+					if (fileName.startsWith("YFS") || fileName.startsWith("PLT")) {
+						CDTXmlComparator xmlComparator = new CDTXmlComparator();
+						xmlComparator.setInputDoc(documentBuilder.parse(f));
+						xmlComparator.setOutDir(outDir);
+						xmlComparator.setFileReader(fileReader);
+						xmlComparator.setFileWriter(fileWriter);
+						Document outputDoc = xmlComparator.merge();
+						fileWriter.writeFile(outDir, outputDoc, fileName);
+					} else {
+						try {
+							fileWriter.copyFileToDirectory(f, outDir);
+						} catch (IOException e) {
+							System.out.println("An error occurred while copying the file.");
+							e.printStackTrace();
+						}
+					}
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }
