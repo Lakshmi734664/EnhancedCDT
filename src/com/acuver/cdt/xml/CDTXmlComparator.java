@@ -8,10 +8,8 @@ import com.acuver.cdt.util.CDTHelper;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 import org.xmlunit.builder.DiffBuilder;
-import org.xmlunit.diff.DefaultNodeMatcher;
 import org.xmlunit.diff.Diff;
 import org.xmlunit.diff.Difference;
-import org.xmlunit.diff.ElementSelectors;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -20,12 +18,13 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.regex.Pattern;
 
 public class CDTXmlComparator {
@@ -36,7 +35,10 @@ public class CDTXmlComparator {
     private CDTFileReader fileReader;
     private CDTFileWriter fileWriter;
     private CDTXmlDifferenceEvaluator CDTXmlDifferenceEvaluator = new CDTXmlDifferenceEvaluator();
-	private CDTHelper cdtHelper = new CDTHelper();
+    private CDTHelper cdtHelper = new CDTHelper();
+
+    private RecordIdentifer recordIdentifer = new RecordIdentifer();
+
     public String getTableName() {
         return tableName;
     }
@@ -52,6 +54,7 @@ public class CDTXmlComparator {
     public void setTablePrefix(String tablePrefix) {
         this.tablePrefix = tablePrefix;
     }
+
     public Document getInputDoc() {
         return inputDoc;
     }
@@ -84,7 +87,6 @@ public class CDTXmlComparator {
         this.fileWriter = fileWriter;
     }
 
-
     public Document merge() throws Exception {
 
         Element root = inputDoc.getDocumentElement();
@@ -96,50 +98,51 @@ public class CDTXmlComparator {
         String primaryKeyName = tablePrefix + "Key";
         CDTXmlDifferenceEvaluator.setPrimaryKeyName(primaryKeyName);
 
+        recordIdentifer.setTableName(tableName);
+        recordIdentifer.setTablePrefix(tablePrefix);
+
         // Processing Insert/Delete Tags
         inputDoc = processInsertDeleteElements(inputDoc);
 
         // Remove False Update
-   /*     inputDoc = removeFalseUpdates(inputDoc);
-
-		// Processing Update Elements with EnhancedCompare
-		addEnhancedCompareToUpdates(inputDoc);
-
-        //inputDoc = moveUpdatesToManualReview(inputDoc);
-
-        inputDoc = removeDeleteTags(inputDoc); */
+        /*
+         * inputDoc = removeFalseUpdates(inputDoc);
+         *
+         * // Processing Update Elements with EnhancedCompare
+         * addEnhancedCompareToUpdates(inputDoc);
+         *
+         * //inputDoc = moveUpdatesToManualReview(inputDoc);
+         *
+         * inputDoc = removeDeleteTags(inputDoc);
+         */
 
         System.out.println("After Merge OutDoc:" + fileWriter.convertDocumentToString(inputDoc));
         return inputDoc;
     }
 
-
-
     public Document processInsertDeleteElements(Document doc) throws Exception {
-        System.out.println("Entering processInsertDeleteElements : " );
+        System.out.println("Entering processInsertDeleteElements : ");
         Element rootEle = doc.getDocumentElement();
 
         String expression = "//" + CDTConstants.INSERT;
         NodeList nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-        debug(doc, "Before processInsertDeleteElements" );
+        debug(doc, "Before processInsertDeleteElements");
         for (int itr = 0; itr < nodeList.getLength(); itr++) {
 
             System.out.println("itr " + itr);
             Element insertElement = (Element) nodeList.item(itr);
 
-            // Getting Deletes from Insert.
-            NodeList deleteNodeList = getDeletesForInsert(doc, insertElement);
-
-            if(deleteNodeList != null)
+            recordIdentifer.setDoc(doc);
+            recordIdentifer.setElemToMatch(insertElement);
+            Element deleteElement = recordIdentifer.getMatchingUniqueElement(true);
+            if(deleteElement != null)
             {
-            System.out.println("deleteNodeList length " + deleteNodeList.getLength());
-            for (int itr2 = 0; itr2 < deleteNodeList.getLength(); itr2++) {
-                Element deleteElement = (Element) deleteNodeList.item(itr2);
-
                 boolean insertHasDifferences = false;
                 System.out.println("Comparing insertNode with deleteNode : ");
 
-                Diff diff = DiffBuilder.compare(insertElement).withTest(deleteElement).checkForSimilar().ignoreComments().ignoreWhitespace().ignoreElementContentWhitespace().normalizeWhitespace().withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
+                Diff diff = DiffBuilder.compare(insertElement).withTest(deleteElement).checkForSimilar()
+                        .ignoreComments().ignoreWhitespace().ignoreElementContentWhitespace().normalizeWhitespace()
+                        .withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
 
                 if (diff.hasDifferences()) {
                     Element updateElement = doc.createElement("Update");
@@ -178,7 +181,8 @@ public class CDTXmlComparator {
 
                             int oldAttrValueStartIndex = difference.indexOf("but was '") + 9;
                             int oldAttrValueEndIndex = difference.indexOf("- comparing") - 2;
-                            String oldAttrValue = difference.substring(oldAttrValueStartIndex, oldAttrValueEndIndex).trim();
+                            String oldAttrValue = difference.substring(oldAttrValueStartIndex, oldAttrValueEndIndex)
+                                    .trim();
 
                             System.out.println("Old Attribute Value: " + oldAttrValue);
 
@@ -188,40 +192,40 @@ public class CDTXmlComparator {
                     rootEle.appendChild(updateElement);
 
                 } else {
-                    System.out.println("No Difference In insertNode and deleteNode. Both Insert and Delete Nodes are removed.");
+                    System.out.println(
+                            "No Difference In insertNode and deleteNode. Both Insert and Delete Nodes are removed.");
                 }
                 System.out.println("removing insert ele at itr " + itr);
 
                 rootEle.removeChild(insertElement);
                 rootEle.removeChild(deleteElement);
-            }
+
             }
         }
-        debug(doc, "After processInsertDeleteElements" );
-        System.out.println("Exiting processInsertDeleteElements : " );
+        debug(doc, "After processInsertDeleteElements");
+        System.out.println("Exiting processInsertDeleteElements : ");
         return doc;
     }
 
     // Remove False Update
     public Document removeFalseUpdates(Document doc) throws Exception {
-        System.out.println("Entering removeFalseUpdates : " );
-        debug(doc, "Before removeFalseUpdates" );
+        System.out.println("Entering removeFalseUpdates : ");
+        debug(doc, "Before removeFalseUpdates");
         String expression = "//" + CDTConstants.UPDATE + "//" + CDTConstants.OLDVALUES;
         NodeList nodeList = null;
         nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
         System.out.println("Old Values nodeList Length()" + nodeList.getLength());
         for (int itr = 0; itr < nodeList.getLength(); itr++) {
             Node oldValueNode = nodeList.item(itr);
+            Node updateNode = oldValueNode.getParentNode();
             System.out.println("\nNode Name :" + oldValueNode.getNodeName());
             NamedNodeMap attrList = oldValueNode.getAttributes();
-            int oldValueIndex = itr;
             for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
                 Node oldValueAttr = attrList.item(attrItr);
                 String oldValueAttrName = oldValueAttr.getNodeName();
                 String oldValueAttrValue = oldValueAttr.getNodeValue();
                 if (isSubXML(oldValueAttrName, oldValueAttrValue)) {
                     System.out.println("The Attribute Value is a SUB-XML : " + oldValueAttrName);
-                    Node updateNode = oldValueNode.getParentNode();
                     NamedNodeMap updateAttrList = updateNode.getAttributes();
                     Diff diff = null;
                     for (int attrItr2 = 0; attrItr2 < updateAttrList.getLength(); attrItr2++) {
@@ -232,10 +236,11 @@ public class CDTXmlComparator {
                         if (oldValueAttrName.equalsIgnoreCase(updateAttrname)) {
                             System.out.println("Inside Sub XML Diff : ");
                             System.out.println("updateAttrValue : " + updateAttrValue);
-                            System.out.println("oldValueAttrValue : "+ oldValueAttrValue);
-                            diff = DiffBuilder.compare(oldValueAttrValue).withTest(updateAttrValue).withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byNameAndText)).checkForSimilar().
-                                    ignoreComments().ignoreWhitespace().ignoreElementContentWhitespace().normalizeWhitespace().
-                                    withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
+                            System.out.println("oldValueAttrValue : " + oldValueAttrValue);
+
+                            diff = DiffBuilder.compare(oldValueAttrValue).withTest(updateAttrValue).checkForSimilar()
+                                    .ignoreComments().ignoreWhitespace().ignoreElementContentWhitespace()
+                                    .normalizeWhitespace().build();
 
                             if (diff != null && diff.hasDifferences()) {
                                 Iterator<Difference> iter = diff.getDifferences().iterator();
@@ -252,8 +257,8 @@ public class CDTXmlComparator {
                 }
             }
         }
-        debug(doc, "After removeFalseUpdates" );
-        System.out.println("Exiting removeFalseUpdates : " );
+        debug(doc, "After removeFalseUpdates");
+        System.out.println("Exiting removeFalseUpdates : ");
         return doc;
 
     }
@@ -292,7 +297,18 @@ public class CDTXmlComparator {
                             String updateAttrValue = updateAttr.getNodeValue();
                             if (oldValueAttrName.equalsIgnoreCase(updateAttrname)) {
                                 System.out.println("Inside Sub XML Diff : ");
-                                diff = DiffBuilder.compare(oldValueAttrValue).withTest(updateAttrValue).checkForSimilar().ignoreComments().ignoreWhitespace().ignoreElementContentWhitespace().normalizeWhitespace().withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
+                                System.out.println("oldValueAttrValue : " + oldValueAttrValue);
+                                System.out.println("updateAttrValue : " + updateAttrValue);
+                                diff = DiffBuilder.compare(oldValueAttrValue).withTest(updateAttrValue)
+                                        .checkForSimilar().ignoreComments().ignoreWhitespace()
+                                        .ignoreElementContentWhitespace().normalizeWhitespace().build();
+
+                                /*
+                                 * diff = DiffBuilder.compare(oldValueAttrValue).withTest(updateAttrValue)
+                                 * .checkForSimilar().ignoreComments().ignoreWhitespace()
+                                 * .ignoreElementContentWhitespace().normalizeWhitespace()
+                                 * .withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
+                                 */
 
                                 if (diff != null && diff.hasDifferences()) {
                                     Iterator<Difference> iter = diff.getDifferences().iterator();
@@ -304,7 +320,9 @@ public class CDTXmlComparator {
                                         }
                                     }
                                     if (subXmlDiffDataList != null && subXmlDiffDataList.size() > 0) {
-                                        processedUpdateEnhancedCompareDoc = addEnhancedCompareToProcessedUpdateDoc(processedUpdateEnhancedCompareDoc, updateNode, subXmlDiffDataList);
+                                        processedUpdateEnhancedCompareDoc = addEnhancedCompareToProcessedUpdateDoc(
+                                                processedUpdateEnhancedCompareDoc, updateNode, subXmlDiffDataList,
+                                                oldValueAttrValue);
                                     }
                                 } else {
                                     System.out.println("No Difference in Sub XML : ");
@@ -316,15 +334,12 @@ public class CDTXmlComparator {
                 }
             }
         }
-
-        // Can Add Method here if Unique Insert Delete Elements are there along with
-        // Update Elements
-
         return processedUpdateEnhancedCompareDoc;
     }
 
     // Add Enhanced Compare Elements To Processed Update Doc
-    public Document addEnhancedCompareToProcessedUpdateDoc(Document processedUpdateEnhancedCompareDoc, Node updateNode, ArrayList<String> subXmlDiffDataList) {
+    public Document addEnhancedCompareToProcessedUpdateDoc(Document processedUpdateEnhancedCompareDoc, Node updateNode,
+                                                           ArrayList<String> subXmlDiffDataList, String subXmlOldAttrValue) throws Exception {
 
         Element enhancedCompareEle = processedUpdateEnhancedCompareDoc.createElement("EnhancedCompare");
         Element attributeEle = processedUpdateEnhancedCompareDoc.createElement("Attribute");
@@ -333,21 +348,41 @@ public class CDTXmlComparator {
 
         for (int i = 0; i < subXmlDiffDataList.size(); i++) {
             String diffValues = subXmlDiffDataList.get(i);
-            System.out.println("diffValues in subXmlDiffDataMap : " + diffValues);
-            int beginIndex = diffValues.indexOf("@") + 1;
-            int endIndex = diffValues.indexOf("to");
-            String attrName = diffValues.substring(beginIndex, endIndex).trim();
-            System.out.println("AttrName in subXmlDiffDataMap :" + attrName);
-            int oldBeginIndex = diffValues.indexOf("value '") + 7;
-            int oldEndIndex = diffValues.indexOf("' but");
-            String oldAttrValue = diffValues.substring(oldBeginIndex, oldEndIndex).trim();
-            System.out.println("oldAttrValue in subXmlDiffDataMap :" + oldAttrValue);
-            int newBeginIndex = diffValues.indexOf("but was '") + 9;
-            int newEndIndex = diffValues.indexOf("- comparing") - 2;
-            String newAttrValue = diffValues.substring(newBeginIndex, newEndIndex).trim();
-            System.out.println("newAttrValue in subXmlDiffDataMap :" + newAttrValue);
-            oldAttrEle.setAttribute(attrName, oldAttrValue);
-            newAttrEle.setAttribute(attrName, newAttrValue);
+            if (diffValues.startsWith("Expected attribute value")) {
+                System.out.println("diffValues in subXmlDiffDataMap : " + diffValues);
+                int beginIndex = diffValues.indexOf("@") + 1;
+                int endIndex = diffValues.indexOf("to");
+                String attrName = diffValues.substring(beginIndex, endIndex).trim();
+                System.out.println("AttrName in subXmlDiffDataMap :" + attrName);
+                int oldBeginIndex = diffValues.indexOf("value '") + 7;
+                int oldEndIndex = diffValues.indexOf("' but");
+                String oldAttrValue = diffValues.substring(oldBeginIndex, oldEndIndex).trim();
+                System.out.println("oldAttrValue in subXmlDiffDataMap :" + oldAttrValue);
+                int newBeginIndex = diffValues.indexOf("but was '") + 9;
+                int newEndIndex = diffValues.indexOf("- comparing") - 2;
+                String newAttrValue = diffValues.substring(newBeginIndex, newEndIndex).trim();
+                System.out.println("newAttrValue in subXmlDiffDataMap :" + newAttrValue);
+                oldAttrEle.setAttribute(attrName, oldAttrValue);
+                newAttrEle.setAttribute(attrName, newAttrValue);
+            } else if (diffValues.startsWith("Expected child nodelist length")) {
+                System.out.println("diffValues : " + diffValues);
+                int beginIndex = diffValues.indexOf("length") + 8;
+                int endIndex = diffValues.indexOf("but was") - 2;
+                System.out.println("beginIndex: " + beginIndex + "endIndex : " + endIndex);
+                String oldAttributeSize = diffValues.substring(beginIndex, endIndex);
+                System.out.println("oldAttributeSize : " + oldAttributeSize);
+                int updateBeginIndex = diffValues.indexOf("but was") + 9;
+                int updateEndIndex = diffValues.indexOf("- comparing") - 2;
+                String updateAttributeSize = diffValues.substring(updateBeginIndex, updateEndIndex);
+                System.out.println("updateAttributeSize : " + updateAttributeSize);
+                Document subxmlDoc = EnhancedCDTMain.factory.newDocumentBuilder()
+                        .parse(new InputSource(new StringReader(subXmlOldAttrValue)));
+                System.out.println("Sub-XML found in attribute : " + subXmlOldAttrValue);
+                Element subxmlElem = subxmlDoc.getDocumentElement();
+                System.out.println("Sub-XML Element Name : " + subxmlElem.getNodeName());
+
+            }
+
         }
         NamedNodeMap updateAttrList = updateNode.getAttributes();
         for (int attrItr = 0; attrItr < updateAttrList.getLength(); attrItr++) {
@@ -512,108 +547,6 @@ public class CDTXmlComparator {
         return tablePrefix;
     }
 
-
-    // Get Delete NodeList for Insert Node
-    private NodeList getDeletesForInsert(Document doc, Element insertElement) throws XPathExpressionException {
-        System.out.println("\nNode Name :" + insertElement.getNodeName());
-        String expression = null;
-        NodeList deleteNodeList = null;
-        String tablePrefixLower = tablePrefix.toLowerCase();
-        String attrWithName = tablePrefixLower + "name";
-        String attrWithId = tablePrefixLower + "id";
-        String attrWithCode = tablePrefixLower + "code";
-        System.out.println("tablePrefixLower : " + tablePrefixLower);
-        String primaryKeyName = tablePrefix + "Key";
-        String primaryKeyValue = insertElement.getAttribute(primaryKeyName);
-        System.out.println("primaryKeyValue in getDeletesForInsert() " + primaryKeyValue);
-        if (primaryKeyValue != null && !primaryKeyValue.isEmpty()) {
-            String expressionForPrimaryKey = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + primaryKeyName.toLowerCase() + "']='" + primaryKeyValue + "']";
-            System.out.println("\nNode expression For Primary Key :" + expressionForPrimaryKey);
-            deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expressionForPrimaryKey).evaluate(doc, XPathConstants.NODESET);
-        }
-        if (deleteNodeList == null || deleteNodeList.getLength() == 0) {
-            System.out.println("No Delete Elements are not present for the Primary Key of Insert Element : ");
-            String organizationCode = "OrganizationCode";
-            String organizationCodeValue = insertElement.getAttribute(organizationCode);
-            String processTypeKey = "ProcessTypeKey";
-            String processTypeKeyValue = insertElement.getAttribute(processTypeKey);
-            NamedNodeMap attrList = insertElement.getAttributes();
-            for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
-                Node attr = attrList.item(attrItr);
-                String attrName = attr.getNodeName();
-                String attrValue = attr.getNodeValue();
-                if (attrName.equalsIgnoreCase(tablePrefixLower)) {
-                    if (!(attrValue.trim().isEmpty())) {
-                        if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "' and " + "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
-
-                        } else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "' and " + "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
-
-                        } else {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "']";
-
-                        }
-                        System.out.println("\nNode expression :" + expression);
-                        deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-                    }
-                    break;
-                } else if (attrName.equalsIgnoreCase(attrWithName)) {
-                    if (!(attrValue.trim().isEmpty())) {
-                        if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "' and " + "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
-
-                        } else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "' and " + "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
-
-                        } else {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "']";
-                        }
-                        System.out.println("\nNode expression :" + expression);
-                        deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-                    }
-                    break;
-                } else if (attrName.equalsIgnoreCase(attrWithId)) {
-                    if (!(attrValue.trim().isEmpty())) {
-                        if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "' and " + "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
-
-                        } else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "' and " + "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
-
-                        } else {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "']";
-
-                        }
-                        System.out.println("\nNode expression :" + expression);
-                        deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-                    }
-                    break;
-                } else if (attrName.equalsIgnoreCase(attrWithCode)) {
-                    if (!(attrValue.trim().isEmpty())) {
-                        if (organizationCodeValue != null && !organizationCodeValue.isEmpty()) {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "' and " + "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + organizationCode.toLowerCase() + "']='" + organizationCodeValue + "']";
-
-                        } else if (processTypeKeyValue != null && !processTypeKeyValue.isEmpty()) {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "' and " + "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + processTypeKey.toLowerCase() + "']='" + processTypeKeyValue + "']";
-
-                        } else {
-                            expression = "//" + CDTConstants.DELETE + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName.toLowerCase() + "']='" + attrValue + "']";
-                        }
-                        System.out.println("\nNode expression :" + expression);
-                        deleteNodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-                    }
-                    break;
-                }
-            }
-
-        }
-       // System.out.println("Delete NodeList Length in getDeletesForInsert() " + deleteNodeList.getLength());
-
-
-        return deleteNodeList;
-    }
-
     // remove delete tag from document
     public Document removeDeleteTags(Document doc) throws Exception {
 
@@ -644,19 +577,18 @@ public class CDTXmlComparator {
 
     }
 
-    public void debug(Document doc , String s) throws Exception
-    {
+    public void debug(Document doc, String s) throws Exception {
         String expression = "//" + CDTConstants.INSERT;
         NodeList nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-        System.out.println(s+ "  Insert nodeList Length() " + nodeList.getLength());
+        System.out.println(s + "  Insert nodeList Length() " + nodeList.getLength());
 
         expression = "//" + CDTConstants.DELETE;
         nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-        System.out.println(s+ "  Delete nodeList Length() " + nodeList.getLength());
+        System.out.println(s + "  Delete nodeList Length() " + nodeList.getLength());
 
         expression = "//" + CDTConstants.UPDATE;
         nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-        System.out.println(s+ "  Update nodeList Length() " + nodeList.getLength());
+        System.out.println(s + "  Update nodeList Length() " + nodeList.getLength());
     }
 
 }

@@ -3,18 +3,20 @@ package com.acuver.cdt.file;
 import com.acuver.cdt.EnhancedCDTMain;
 import com.acuver.cdt.util.CDTConstants;
 import com.acuver.cdt.util.CDTHelper;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.xpath.XPathConstants;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.stream.Collectors;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.xpath.XPathConstants;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 public class CDTFileReader {
 	public void readPropertiesFile() throws Exception {
@@ -63,18 +65,21 @@ public class CDTFileReader {
 		}
 
 	}
-
-	public void populateRecordIdentifier() {
+	public void populateRecordIdentifier()
+	{
 		Properties properties = new Properties();
 
 		try {
-			properties.load(new FileInputStream("recordIdentifier.config"));
+			properties.load( new FileInputStream(CDTConstants.currentDirectory+ File.separator+"recordIdentifier.config"));
 		} catch (Exception e) {
-
 		}
-		EnhancedCDTMain.recordIdentifierMap.putAll(properties.entrySet().stream()
-				.collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString())));
+		EnhancedCDTMain.recordIdentifierMap = new HashMap<String,String>();
+		EnhancedCDTMain.recordIdentifierMap.putAll(properties.entrySet()
+				.stream()
+				.collect(Collectors.toMap(e -> e.getKey().toString(),
+						e -> e.getValue().toString())));
 	}
+
 
 	public ArrayList<String> readYDKPrefs(String ydkperfs) throws Exception {
 

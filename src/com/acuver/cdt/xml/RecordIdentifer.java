@@ -16,31 +16,24 @@ public class RecordIdentifer {
     private Document doc;
     private Element elemToMatch;
 
-    private Element getMatchingUniqueElement(boolean isCompareReport) throws Exception
+    public Element getMatchingUniqueElement(boolean isCompareReport) throws Exception
     {
         Element outEle = null;
-        String primaryKeyName = tablePrefix + "Key";
-        String primaryKeyValue = elemToMatch.getAttribute(primaryKeyName);
-        StringBuffer xpathExpr = null;
-        NodeList nodeList = null;
-        if (primaryKeyValue != null && !primaryKeyValue.isEmpty()) {
-            xpathExpr = new StringBuffer("//" + "[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
-                    + primaryKeyName.toLowerCase() + "']='" + primaryKeyValue + "']");
+        Map<String,String> tblRecordIdentifierMap = getUniqueIdentifier();
+        if(!tblRecordIdentifierMap.isEmpty())
+        {
+            StringBuffer xpathExpr = new StringBuffer("//");
+            tblRecordIdentifierMap.forEach((k, v) ->  xpathExpr.append("[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
+                    + k +  "']='" + v + "']"));
+
             outEle = getElementUsingXpath( xpathExpr, isCompareReport);
-        }
-        if(outEle == null) {
-            String tablePrefixLower = tablePrefix.toLowerCase();
-            String attrWithName = tablePrefixLower + "name";
-            String attrWithId = tablePrefixLower + "id";
-            String attrWithCode = tablePrefixLower + "code";
-            System.out.println("tablePrefixLower : " + tablePrefixLower);
         }
         return outEle;
     }
 
     private Map<String,String> getUniqueIdentifier() throws Exception
     {
-        Map<String,String> recordIdentifierMap = new HashMap<String,String>();
+        Map<String,String> tblRecordIdentifierMap = new HashMap<String,String>();
 
         String attrName = tablePrefix.toLowerCase();
         String value = getAttributeValue(attrName);
@@ -59,9 +52,9 @@ public class RecordIdentifer {
                 }
             }
         }
-        addRecordIdentifier(attrName, value, recordIdentifierMap);
+        addRecordIdentifier(attrName, value, tblRecordIdentifierMap);
 
-        if(recordIdentifierMap.isEmpty())
+        if(tblRecordIdentifierMap.isEmpty())
         {
             //read identifiers from config file
             String configValue = EnhancedCDTMain.recordIdentifierMap.get(tableName);
@@ -70,10 +63,10 @@ public class RecordIdentifer {
 
             }
         }
-        addRecordIdentifier(CDTConstants.organizationCode, elemToMatch.getAttribute(CDTConstants.organizationCode), recordIdentifierMap);
-        addRecordIdentifier(CDTConstants.processTypeKey, elemToMatch.getAttribute(CDTConstants.processTypeKey), recordIdentifierMap);
+        addRecordIdentifier(CDTConstants.organizationCode, elemToMatch.getAttribute(CDTConstants.organizationCode), tblRecordIdentifierMap);
+        addRecordIdentifier(CDTConstants.processTypeKey, elemToMatch.getAttribute(CDTConstants.processTypeKey), tblRecordIdentifierMap);
 
-        return recordIdentifierMap;
+        return tblRecordIdentifierMap;
     }
 
     private void addRecordIdentifier(String name , String value ,  Map<String,String> recordIdentifierMap)
@@ -85,19 +78,14 @@ public class RecordIdentifer {
     }
     private String getAttributeValue(String attrNameLower) throws Exception
     {
-
-        String xpath = "//[@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='"
-                + attrNameLower + "]";
-
-        String attrValue = (String) EnhancedCDTMain.xPath.compile(xpath).evaluate(elemToMatch, XPathConstants.STRING);
-        return attrValue;
-
+        String xpath = "@*[translate(name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrNameLower + "']";
+        return (String) EnhancedCDTMain.xPath.compile(xpath).evaluate(elemToMatch, XPathConstants.STRING);
     }
 
     private Element getElementUsingXpath(StringBuffer xpathExpr, boolean isCompareReport) throws Exception {
         Element outEle = null;
         if (isCompareReport) {
-            xpathExpr = xpathExpr.insert(1, "//" + CDTConstants.DELETE);
+            xpathExpr = xpathExpr.insert(2,  CDTConstants.DELETE);
         }
 
         NodeList nodeList = (NodeList) EnhancedCDTMain.xPath.compile(xpathExpr.toString()).evaluate(doc, XPathConstants.NODESET);
