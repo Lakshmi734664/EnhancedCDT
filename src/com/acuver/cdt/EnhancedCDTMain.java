@@ -52,6 +52,7 @@ public class EnhancedCDTMain {
 				fileReader.readPropertiesFile();
 				// fileReader.populateRecordIdentifier();
 				mergeCDTReports(fileReader, fileWriter);
+				fileWriter.readDataFromExcelSheet();
 				break;
 			case "--mergeManualReview":
 				fileReader.readPropertiesFile();
