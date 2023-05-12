@@ -27,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CDTXmlComparator {
@@ -136,8 +137,8 @@ public class CDTXmlComparator {
 			recordIdentifer.setElemToMatch(insertElement);
 			Element deleteElement = recordIdentifer.getMatchingUniqueElement(true);
 			if (deleteElement != null) {
-				boolean insertHasDifferences = false;
-				System.out.println("Comparing insertNode with deleteNode : ");
+
+				System.out.println("Comparing insertElement with deleteElement : ");
 
 				Diff diff = DiffBuilder.compare(insertElement).withTest(deleteElement).checkForSimilar()
 						.ignoreComments().ignoreWhitespace().ignoreElementContentWhitespace().normalizeWhitespace()
@@ -168,7 +169,7 @@ public class CDTXmlComparator {
 						String difference = iter.next().toString();
 						System.out.println(difference);
 
-						if (difference != null && !difference.contains("xml version")) {
+						if (difference != null && !(difference.contains("xml version"))) {
 							int attrNameStartIndex = difference.indexOf("@") + 1;
 							int attrNameEndIndex = difference.indexOf("to <");
 
@@ -184,7 +185,22 @@ public class CDTXmlComparator {
 									.trim();
 
 							System.out.println("Old Attribute Value: " + oldAttrValue);
+							oldValuesElement.setAttribute(attrName, oldAttrValue);
+						}
+						if (difference != null && difference.contains("xml version")) {
+							System.out
+									.println("difference Contains xml version having SubXml differences:" + difference);
+							int attrNameStartIndex = difference.indexOf("@") + 1;
+							int attrNameEndIndex = difference.indexOf("to <");
 
+							System.out.println("attrNameStartIndex: " + attrNameStartIndex);
+							System.out.println("attrNameEndIndex: " + attrNameEndIndex);
+							String attrName = difference.substring(attrNameStartIndex, attrNameEndIndex).trim();
+
+							System.out.println("UpdateAttrName :" + attrName);
+							String oldAttrValue = deleteElement.getAttribute(attrName);
+
+							System.out.println("Old Attribute Value of SubXml: " + oldAttrValue);
 							oldValuesElement.setAttribute(attrName, oldAttrValue);
 						}
 					}
@@ -316,7 +332,7 @@ public class CDTXmlComparator {
 									if (subXmlDiffDataList != null && subXmlDiffDataList.size() > 0) {
 										processedUpdateEnhancedCompareDoc = addEnhancedCompareToProcessedUpdateDoc(
 												processedUpdateEnhancedCompareDoc, updateNode, subXmlDiffDataList,
-												oldValueAttrValue);
+												oldValueAttrValue, updateAttrValue);
 									}
 								} else {
 									System.out.println("No Difference in Sub XML : ");
@@ -329,9 +345,11 @@ public class CDTXmlComparator {
 			}
 		}
 
-		if (processedUpdateEnhancedCompareDoc.getChildNodes().getLength() > 0) {
+		System.out.println("processedUpdateEnhancedCompareDoc length :  "
+				+ processedUpdateEnhancedCompareDoc.getDocumentElement().getChildNodes().getLength());
+		if (processedUpdateEnhancedCompareDoc.getDocumentElement().getChildNodes().getLength() > 0) {
 			String fileName = parentNodeName + ".xml";
-			String fullPath = CDTFileWriter.fullPath + File.separator + "enhancedcompare";
+			String fullPath = outDir + File.separator + CDTConstants.enhancedCompare;
 			fileWriter.writeFile(fullPath, processedUpdateEnhancedCompareDoc, fileName);
 		}
 		System.out.println("Exiting addEnhancedCompareToUpdates : ");
@@ -339,7 +357,8 @@ public class CDTXmlComparator {
 
 	// Add Enhanced Compare Elements To Processed Update Doc
 	public Document addEnhancedCompareToProcessedUpdateDoc(Document processedUpdateEnhancedCompareDoc, Node updateNode,
-			ArrayList<String> subXmlDiffDataList, String subXmlOldAttrValue) throws Exception {
+			ArrayList<String> subXmlDiffDataList, String subXmlOldAttrValue, String subXmlUpdateAttrValue)
+			throws Exception {
 
 		System.out.println("Entering addEnhancedCompareToProcessedUpdateDoc : ");
 		Node importedUpdateNode = processedUpdateEnhancedCompareDoc.importNode(updateNode, true);
@@ -350,18 +369,31 @@ public class CDTXmlComparator {
 		Element oldAttrEle = processedUpdateEnhancedCompareDoc.createElement("Old");
 		Element newAttrEle = processedUpdateEnhancedCompareDoc.createElement("New");
 
-		Document subxmlDoc = EnhancedCDTMain.factory.newDocumentBuilder()
+		Document oldAttrSubxmlDoc = EnhancedCDTMain.factory.newDocumentBuilder()
 				.parse(new InputSource(new StringReader(subXmlOldAttrValue)));
-		System.out.println("subxmlDoc:" + fileWriter.convertDocumentToString(subxmlDoc));
+		System.out.println("oldAttrSubxmlDoc:" + fileWriter.convertDocumentToString(oldAttrSubxmlDoc));
+
+		Document updateAttrSubxmlDoc = EnhancedCDTMain.factory.newDocumentBuilder()
+				.parse(new InputSource(new StringReader(subXmlUpdateAttrValue)));
+		System.out.println("updateAttrSubxmlDoc:" + fileWriter.convertDocumentToString(updateAttrSubxmlDoc));
 
 		for (int i = 0; i < subXmlDiffDataList.size(); i++) {
 			String diffValues = subXmlDiffDataList.get(i);
 			if (diffValues.startsWith("Expected attribute value")) {
 				System.out.println("diffValues in Expected attribute value : " + diffValues);
-				int beginIndex = diffValues.indexOf("@") + 1;
-				int endIndex = diffValues.indexOf("to");
-				String attrName = diffValues.substring(beginIndex, endIndex).trim();
-				System.out.println("AttrName in Expected attribute value :" + attrName);
+
+				// Regular expression pattern to match attributes starting with '@'
+				String regex = "@\\w+";
+				String attrName = "";
+				Pattern pattern = Pattern.compile(regex);
+				Matcher matcher = pattern.matcher(diffValues);
+				// Find and print attribute names
+				while (matcher.find()) {
+					attrName = matcher.group();
+					attrName = attrName.replace("@", "");
+					System.out.println("attrName in Expected attribute value : " + attrName);
+				}
+
 				int oldBeginIndex = diffValues.indexOf("value '") + 7;
 				int oldEndIndex = diffValues.indexOf("' but");
 				String oldAttrValue = diffValues.substring(oldBeginIndex, oldEndIndex).trim();
@@ -372,58 +404,125 @@ public class CDTXmlComparator {
 				System.out.println("newAttrValue in Expected attribute value :" + newAttrValue);
 				oldAttrEle.setAttribute(attrName, oldAttrValue);
 				newAttrEle.setAttribute(attrName, newAttrValue);
+
 			} else if (diffValues.startsWith("Expected attribute name")) {
 				System.out.println("diffValues in Expected attribute name: " + diffValues);
-				int beginIndex = diffValues.indexOf("@") + 1;
-				int endIndex = diffValues.indexOf("' - comparing ");
-				String attrName = diffValues.substring(beginIndex, endIndex).trim();
-				System.out.println("attrName in Expected attribute name: " + attrName);
-				int oldBeginIndex = diffValues.indexOf("]/");
-				int oldEndIndex = diffValues.indexOf("]/@");
-				String oldAttrValue = diffValues.substring(oldBeginIndex, oldEndIndex).trim();
-				String oldAttributeSize = oldAttrValue.replaceAll("[^0-9]", "");
-				System.out.println("oldAttributeSize in Expected attribute name: " + oldAttributeSize);
-				int oldAttributeIndex = Integer.parseInt(oldAttributeSize);
-				System.out.println("oldAttributeIndex in Expected attribute name:  " + oldAttributeIndex);
 
-				// Get all elements in the document
-				NodeList elements = subxmlDoc.getElementsByTagName("*");
-				// Check if the specified index is within the bounds of the node list
-				if (oldAttributeIndex >= 0 && oldAttributeIndex < elements.getLength()) {
-					// Retrieve the element at the specified index
-					Element desiredElement = (Element) elements.item(oldAttributeIndex);
-					System.out.println("Desired Element in Expected attribute name : " + desiredElement.getNodeName());
+				// Regular expression pattern to match attributes starting with '@'
+				String regex = "@\\w+";
+				String attrName = "";
+				Pattern pattern = Pattern.compile(regex);
+				Matcher matcher = pattern.matcher(diffValues);
+				// Find and print attribute names
+				while (matcher.find()) {
+					attrName = matcher.group();
+					attrName = attrName.replace("@", "");
+					System.out.println("attrName in Expected attribute name : " + attrName);
+				}
+
+				// Regular expression pattern to match digits within square brackets
+				String regex1 = "\\[(\\d+)\\]";
+
+				Pattern pattern1 = Pattern.compile(regex1);
+				Matcher matcher1 = pattern1.matcher(diffValues);
+
+				// Find and print the last digit within the last square brackets
+				String lastDigit = "";
+				while (matcher1.find()) {
+					lastDigit = matcher1.group(1);
+
+				}
+
+				System.out.println("Last Digit: " + lastDigit);
+				int oldAttributeIndex = Integer.parseInt(lastDigit);
+				System.out.println("oldAttributeIndex in Expected attribute name : " + oldAttributeIndex);
+
+				// Regular expression pattern to match attribute name and last digit within
+				// square brackets
+				String regex2 = "/([^/\\[]+)\\[\\d+\\]";
+
+				Pattern pattern2 = Pattern.compile(regex2);
+				Matcher matcher2 = pattern2.matcher(diffValues);
+
+				// Find and print the attribute names without the last digit
+				String elementName = "";
+				while (matcher2.find()) {
+					elementName = matcher2.group(1);
+				}
+				System.out.println("Sub Element Name: " + elementName);
+				Element desiredElement = (Element) oldAttrSubxmlDoc.getElementsByTagName(elementName)
+						.item(oldAttributeIndex - 1);
+				if (desiredElement != null && desiredElement.hasAttribute(attrName)) {
+					System.out.println("desiredElement has this Attribute : " + attrName);
 					String attrValue = desiredElement.getAttribute(attrName);
+					System.out.println("Desired Element in Expected attribute name : " + attrValue);
 					oldAttrEle.setAttribute(attrName, attrValue);
+
 				} else {
-					System.out.println("Index is out of bounds.");
+					Element updateDesiredElement = (Element) updateAttrSubxmlDoc.getElementsByTagName(elementName)
+							.item(oldAttributeIndex - 1);
+					if (updateDesiredElement != null) {
+						String attrValue = updateDesiredElement.getAttribute(attrName);
+						newAttrEle.setAttribute(attrName, attrValue);
+						System.out.println(
+								"New Attribute in updateDesiredElement: " + updateDesiredElement.getNodeName());
+					}
 				}
 
 			} else if (diffValues.startsWith("Expected child")
 					&& !diffValues.startsWith("Expected child nodelist length")) {
-				System.out.println("diffValues in Expected child : " + diffValues);
-				int beginIndex = diffValues.indexOf("]/");
-				int endIndex = diffValues.indexOf("] to <NULL> ");
-				String oldAttribute = diffValues.substring(beginIndex, endIndex);
-				System.out.println("oldAttribute in Expected child :  " + oldAttribute);
-				String oldAttributeSize = oldAttribute.replaceAll("[^0-9]", "");
-				int oldAttributeIndex = Integer.parseInt(oldAttributeSize);
-				System.out.println("oldAttributeIndex in Expected child :  " + oldAttributeIndex);
 
-				// Get all elements in the document
-				NodeList elements = subxmlDoc.getElementsByTagName("*");
-				// Check if the specified index is within the bounds of the node list
-				if (oldAttributeIndex >= 0 && oldAttributeIndex < elements.getLength()) {
-					// Retrieve the element at the specified index
-					Element desiredElement = (Element) elements.item(oldAttributeIndex);
+				System.out.println("diffValues in Expected child : " + diffValues);
+				// Regular expression pattern to match digits within square brackets
+				String regex1 = "\\[(\\d+)\\]";
+
+				Pattern pattern1 = Pattern.compile(regex1);
+				Matcher matcher1 = pattern1.matcher(diffValues);
+
+				// Find and print the last digit within the last square brackets
+				String lastDigit = "";
+				while (matcher1.find()) {
+					lastDigit = matcher1.group(1);
+
+				}
+				System.out.println("Last Digit: " + lastDigit);
+				int oldAttributeIndex = Integer.parseInt(lastDigit);
+				System.out.println("oldAttributeIndex in Expected child : " + oldAttributeIndex);
+
+				// Regular expression pattern to match attribute name and last digit within
+				// square brackets
+				String regex2 = "/([^/\\[]+)\\[\\d+\\]";
+
+				Pattern pattern2 = Pattern.compile(regex2);
+				Matcher matcher2 = pattern2.matcher(diffValues);
+
+				// Find and print the attribute names without the last digit
+				String elementName = "";
+				while (matcher2.find()) {
+					elementName = matcher2.group(1);
+				}
+				System.out.println("Sub Element Name: " + elementName);
+
+				Element desiredElement = (Element) oldAttrSubxmlDoc.getElementsByTagName(elementName)
+						.item(oldAttributeIndex - 1);
+				if (desiredElement != null) {
 					System.out.println("Desired Element in Expected child : " + desiredElement.getNodeName());
 					Node importedElementNode = processedUpdateEnhancedCompareDoc.importNode(desiredElement, true);
 					oldAttrEle.appendChild(importedElementNode);
 				} else {
-					System.out.println("Index is out of bounds.");
+					Element updateDesiredElement = (Element) updateAttrSubxmlDoc.getElementsByTagName(elementName)
+							.item(oldAttributeIndex - 1);
+					if (updateDesiredElement != null) {
+						System.out.println(
+								"Update Desired Element in Expected child : " + updateDesiredElement.getNodeName());
+						Node importedElementNode = processedUpdateEnhancedCompareDoc.importNode(updateDesiredElement,
+								true);
+						newAttrEle.appendChild(importedElementNode);
+					}
 				}
 			}
 		}
+
 		NamedNodeMap updateAttrList = updateNode.getAttributes();
 		for (int attrItr = 0; attrItr < updateAttrList.getLength(); attrItr++) {
 			Node updateAttr = updateAttrList.item(attrItr);
@@ -474,12 +573,10 @@ public class CDTXmlComparator {
 			db = dbf.newDocumentBuilder();
 			Document cdtxmls1doc = null;
 			Document cdtxmls2doc = null;
-			Element Xmls1Element = null;
-			Element Xmls2Element = null;
 			String Xmls1Modifyts = null;
 			String Xmls2Modifyts = null;
 
-			// Getting file from Directory
+			// Getting file from Directory CDT_XMLS1
 			String file1Data = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS1, parentNodeName);
 			if (file1Data != null && !file1Data.isEmpty()) {
 				cdtxmls1doc = db.parse(file1Data);
@@ -488,7 +585,7 @@ public class CDTXmlComparator {
 				for (int Xmls1Nodeitr = 0; Xmls1Nodeitr < Xmls1NodeList.getLength(); Xmls1Nodeitr++) {
 					Node xmls1Node = Xmls1NodeList.item(Xmls1Nodeitr);
 					if (xmls1Node instanceof Element) {
-						Xmls1Element = (Element) xmls1Node;
+						Element Xmls1Element = (Element) xmls1Node;
 						String Xmls1PrimaryKeyValue = Xmls1Element.getAttribute(primaryKeyName);
 						if (Xmls1PrimaryKeyValue.equalsIgnoreCase(primaryKeyValue)) {
 							System.out.println("Xmls1PrimaryKeyValue : " + Xmls1PrimaryKeyValue);
@@ -500,24 +597,17 @@ public class CDTXmlComparator {
 				}
 			}
 
-			// Getting file from Directory
+			// Getting file from Directory CDT_XMLS2
 			String file2Data = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS2, parentNodeName);
 			if (file2Data != null && !file2Data.isEmpty()) {
 				cdtxmls2doc = db.parse(file2Data);
-				NodeList Xmls2NodeList = cdtxmls2doc.getDocumentElement().getChildNodes();
-				System.out.println("Xmls2NodeList Length : " + Xmls2NodeList.getLength());
-				for (int Xmls2Nodeitr = 0; Xmls2Nodeitr < Xmls2NodeList.getLength(); Xmls2Nodeitr++) {
-					Node xmls2Node = Xmls2NodeList.item(Xmls2Nodeitr);
-					if (xmls2Node instanceof Element) {
-						Xmls2Element = (Element) xmls2Node;
-						String Xmls2PrimaryKeyValue = Xmls2Element.getAttribute(primaryKeyName);
-						if (Xmls2PrimaryKeyValue.equalsIgnoreCase(primaryKeyValue)) {
-							System.out.println("Xmls2PrimaryKeyValue : " + Xmls2PrimaryKeyValue);
-							Xmls2Modifyts = Xmls2Element.getAttribute("Modifyts");
-							System.out.println("Xmls2Modifyts for CDT_XMLS2 : " + Xmls2Modifyts);
-							break;
-						}
-					}
+				recordIdentifer.setDoc(cdtxmls2doc);
+				recordIdentifer.setElemToMatch(updateElement);
+				Element Xmls2ElementMatch = recordIdentifer.getMatchingUniqueElement(false);
+				if (Xmls2ElementMatch != null) {
+					System.out.println("Xmls2ElementMatch Node Name : " + Xmls2ElementMatch.getNodeName());
+					Xmls2Modifyts = Xmls2ElementMatch.getAttribute("Modifyts");
+					System.out.println("Xmls2Modifyts  for CDT_XMLS2 : " + Xmls2Modifyts);
 				}
 			}
 
@@ -548,11 +638,12 @@ public class CDTXmlComparator {
 			}
 		}
 
-		// Writing the File into Output Directory
+		// Writing the File into Output Directory manual Folder
 		try {
-			if (processedManualReviewDoc.getChildNodes().getLength() > 0) {
+			if (processedManualReviewDoc.getDocumentElement().getChildNodes().getLength() > 0) {
 				String fileName = parentNodeName + ".xml";
-				fileWriter.writeFile(EnhancedCDTMain.CDT_REPORT_DIR1_OUT, processedManualReviewDoc, fileName);
+				String fullPath = outDir + File.separator + CDTConstants.manual;
+				fileWriter.writeFile(fullPath, processedManualReviewDoc, fileName);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
