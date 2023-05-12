@@ -21,13 +21,12 @@ import java.util.stream.Collectors;
 public class CDTFileReader {
 	public void readPropertiesFile() throws Exception {
 
-		File enhancedcdtfile = new File(CDTConstants.currentDirectory + File.separator+"enhancedcdt.properties");
+		File enhancedcdtfile = new File(CDTConstants.currentDirectory + File.separator + "enhancedcdt.properties");
 		Properties prop = null;
 
-		CDTHelper helper = new CDTHelper();
 		if (!enhancedcdtfile.exists()) {
 			// Display message and exit if config file does not exist
-			helper.showPropertiesFileHelpMsg();
+			CDTHelper.showPropertiesFileHelpMsg();
 			System.exit(1);
 		}
 
@@ -60,26 +59,24 @@ public class CDTFileReader {
 				|| EnhancedCDTMain.CDT_REPORT_DIR2 != null && EnhancedCDTMain.CDT_REPORT_DIR2.trim().isEmpty()
 				|| EnhancedCDTMain.CDT_XMLS1 != null && EnhancedCDTMain.CDT_XMLS1.trim().isEmpty()
 				|| EnhancedCDTMain.CDT_XMLS2 != null && EnhancedCDTMain.CDT_XMLS2.trim().isEmpty()) {
-			helper.showPropertiesFileHelpMsg();
+			CDTHelper.showPropertiesFileHelpMsg();
 			System.exit(1);
 		}
 
 	}
-	public void populateRecordIdentifier()
-	{
+
+	public void populateRecordIdentifier() {
 		Properties properties = new Properties();
 
 		try {
-			properties.load( new FileInputStream(CDTConstants.currentDirectory+ File.separator+"recordIdentifier.config"));
+			properties.load(
+					new FileInputStream(CDTConstants.currentDirectory + File.separator + "recordIdentifier.config"));
 		} catch (Exception e) {
 		}
-		EnhancedCDTMain.recordIdentifierMap = new HashMap<String,String>();
-		EnhancedCDTMain.recordIdentifierMap.putAll(properties.entrySet()
-				.stream()
-				.collect(Collectors.toMap(e -> e.getKey().toString(),
-						e -> e.getValue().toString())));
+		EnhancedCDTMain.recordIdentifierMap = new HashMap<String, String>();
+		EnhancedCDTMain.recordIdentifierMap.putAll(properties.entrySet().stream()
+				.collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString())));
 	}
-
 
 	public ArrayList<String> readYDKPrefs(String ydkperfs) throws Exception {
 
@@ -121,7 +118,7 @@ public class CDTFileReader {
 	}
 
 	// Read File From Directory
-	public String readFileFromDir(String directory, String fileName) {
+	public Document readFileFromDir(String directory, String fileName) {
 		// Creating a File object for directory
 		File directoryPath = new File(directory);
 		// List of all files and directories
@@ -136,6 +133,8 @@ public class CDTFileReader {
 				}
 			}
 		}
-		return fileData;
+
+		return CDTHelper.convertStringToDocument(fileData);
+
 	}
 }

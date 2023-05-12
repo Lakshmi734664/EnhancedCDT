@@ -108,16 +108,16 @@ public class CDTXmlComparator {
 		inputDoc = processInsertDeleteElements(inputDoc);
 
 		// Remove False Update
-		inputDoc = removeFalseUpdates(inputDoc);
+		//inputDoc = removeFalseUpdates(inputDoc);
 
 		// Processing Update Elements with EnhancedCompare
-		addEnhancedCompareToUpdates(inputDoc);
+		//addEnhancedCompareToUpdates(inputDoc);
 
-		// inputDoc = moveUpdatesToManualReview(inputDoc);
+		//moveUpdatesToManualReview(inputDoc);
 
-		// inputDoc = removeDeleteTags(inputDoc);
+		//inputDoc = removeDeleteTags(inputDoc);
 
-		System.out.println("After Merge OutDoc:" + fileWriter.convertDocumentToString(inputDoc));
+		System.out.println("After Merge OutDoc:" + CDTHelper.convertDocumentToString( fileWriter.convertDocumentinPrettyFormat(inputDoc)));
 		return inputDoc;
 	}
 
@@ -371,11 +371,11 @@ public class CDTXmlComparator {
 
 		Document oldAttrSubxmlDoc = EnhancedCDTMain.factory.newDocumentBuilder()
 				.parse(new InputSource(new StringReader(subXmlOldAttrValue)));
-		System.out.println("oldAttrSubxmlDoc:" + fileWriter.convertDocumentToString(oldAttrSubxmlDoc));
+		System.out.println("oldAttrSubxmlDoc:" +  CDTHelper.convertDocumentToString( fileWriter.convertDocumentinPrettyFormat(oldAttrSubxmlDoc)));
 
 		Document updateAttrSubxmlDoc = EnhancedCDTMain.factory.newDocumentBuilder()
 				.parse(new InputSource(new StringReader(subXmlUpdateAttrValue)));
-		System.out.println("updateAttrSubxmlDoc:" + fileWriter.convertDocumentToString(updateAttrSubxmlDoc));
+		System.out.println("updateAttrSubxmlDoc:" + CDTHelper.convertDocumentToString(fileWriter.convertDocumentinPrettyFormat(updateAttrSubxmlDoc)));
 
 		for (int i = 0; i < subXmlDiffDataList.size(); i++) {
 			String diffValues = subXmlDiffDataList.get(i);
@@ -577,7 +577,7 @@ public class CDTXmlComparator {
 			String Xmls2Modifyts = null;
 
 			// Getting file from Directory CDT_XMLS1
-			String file1Data = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS1, parentNodeName);
+			String file1Data  = CDTHelper.convertDocumentToString(fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS1, parentNodeName));
 			if (file1Data != null && !file1Data.isEmpty()) {
 				cdtxmls1doc = db.parse(file1Data);
 				NodeList Xmls1NodeList = cdtxmls1doc.getDocumentElement().getChildNodes();
@@ -598,7 +598,7 @@ public class CDTXmlComparator {
 			}
 
 			// Getting file from Directory CDT_XMLS2
-			String file2Data = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS2, parentNodeName);
+			String file2Data  = CDTHelper.convertDocumentToString(fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS2, parentNodeName));
 			if (file2Data != null && !file2Data.isEmpty()) {
 				cdtxmls2doc = db.parse(file2Data);
 				recordIdentifer.setDoc(cdtxmls2doc);

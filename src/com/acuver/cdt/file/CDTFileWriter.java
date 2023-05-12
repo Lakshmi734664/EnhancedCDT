@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,10 +14,15 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -30,10 +36,11 @@ import org.xml.sax.InputSource;
 
 import com.acuver.cdt.EnhancedCDTMain;
 import com.acuver.cdt.util.CDTConstants;
+import com.acuver.cdt.util.CDTHelper;
 
 public class CDTFileWriter {
 
-	public static String fullPath = "";
+	
 
 	public void appendXmlFile(File sourceFile, File destFile) {
 		try {
@@ -73,6 +80,7 @@ public class CDTFileWriter {
 
 	public String createOutDir(String location) throws IOException {
 
+	    String fullPath = "";
 		String timeStamp = new SimpleDateFormat(CDTConstants.dateFormat).format(new Date());
 
 		if (location == null) {
@@ -95,50 +103,31 @@ public class CDTFileWriter {
 	// Writing File to a Directory
 	public void writeFile(String fullPath, Document outputDoc, String fileName) throws Exception {
 		try {
-			String fileData = convertDocumentToString(outputDoc);
+			String fileData = CDTHelper.convertDocumentToString( convertDocumentinPrettyFormat(outputDoc));
 			createXMLFile(fullPath, fileName, fileData);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+ 
+	public  Document convertDocumentinPrettyFormat(Document document) {
+        try {
+        	
+            Transformer transformer = EnhancedCDTMain.tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-	public String convertDocumentToString(Document document) throws Exception {
+            StringWriter stringWriter = new StringWriter();
+          
+            transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
+            
+            return CDTHelper.convertStringToDocument(stringWriter.toString().replaceAll("\\n\\s*\\n", "\n"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
-		Transformer transformer = EnhancedCDTMain.tf.newTransformer();
-		StringWriter sw = new StringWriter();
-		transformer.transform(new DOMSource(document), new StreamResult(sw));
 
-		try {
-			// create a new transformer factory and set the formatting properties
-			EnhancedCDTMain.tf.setAttribute("indent-number", 4);
-
-			// create a new transformer and set the formatting properties
-			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-			// create a new DOM source from the XML string
-			DOMSource source = new DOMSource(EnhancedCDTMain.factory.newInstance().newDocumentBuilder()
-					.parse(new InputSource(new StringReader(sw.toString()))));
-
-			// create a new string writer to store the formatted XML
-			StringWriter writer = new StringWriter();
-
-			// transform the DOM source to a string writer with the transformer
-			transformer.transform(source, new StreamResult(writer));
-
-			// return the formatted XML as a string
-			return writer.toString().replaceAll("\\n\\s*\\n", "\n");
-		} catch (Exception e) {
-			throw new RuntimeException("Error occurs when pretty-printing xml:\n" + sw.toString(), e);
-		}
-	}
-
-	/*
-	 * public String convertDocumentToString(Document document) throws Exception {
-	 * Transformer trans = EnhancedCDTMain.tf.newTransformer(); StringWriter sw =
-	 * new StringWriter(); trans.transform(new DOMSource(document), new
-	 * StreamResult(sw)); return sw.toString().replaceAll("\\n\\s*\\n", "\n"); }
-	 */
 	public void createXMLFile(String fileLocation, String fileName, String fileData)
 			throws IllegalArgumentException, IOException {
 		FileWriter writer = null;
@@ -158,7 +147,7 @@ public class CDTFileWriter {
 				if (!file.exists()) {
 					file.createNewFile();
 				}
-
+                
 				// Create a new FileWriter object to write to the file
 				writer = new FileWriter(file);
 
@@ -172,9 +161,7 @@ public class CDTFileWriter {
 		} finally {
 			// Close the writer
 			writer.close();
-
 		}
-
 	}
 
 	public void createDirectory(String path) {

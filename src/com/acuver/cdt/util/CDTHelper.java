@@ -1,17 +1,29 @@
 package com.acuver.cdt.util;
 
+import java.io.StringReader;
+import java.io.StringWriter;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
+import com.acuver.cdt.EnhancedCDTMain;
 
 public class CDTHelper {
 
-	public void printMsg(String msg) {
+	public static void printMsg(String msg) {
 		System.out.println(msg);
 	}
 
-	public void showPropertiesFileHelpMsg() {
+	public static void showPropertiesFileHelpMsg() {
 		String message = "Please create a file enhancedcdt.properties in current folder. The following properties can be configured.\r\n"
 				+ "	CDT_REPORT_DIR1     CDT Compare Report1\r\n" + "	CDT_REPORT_DIR2     CDT Compare Report2\r\n"
 				+ "	CDT_XMLS1  	    CDT Export XMLs1\r\n" + "	CDT_XMLS2  	    CDT Export XMLs\r\n"
@@ -20,15 +32,14 @@ public class CDTHelper {
 		printMsg(message);
 	}
 
-	public Element createChildElement(Element element, String childName) {
+	public static Element createChildElement(Element element, String childName) {
 		Document doc = element.getOwnerDocument();
 		Element childElement = doc.createElement(childName);
 		element.appendChild(childElement);
 		return childElement;
 	}
 
-
-	public Element getChildElement(Element element, String childName) {
+	public static Element getChildElement(Element element, String childName) {
 		NodeList childNodes = element.getChildNodes();
 		Element childElement = null;
 		// Look for existing child element and update it
@@ -47,6 +58,29 @@ public class CDTHelper {
 		}
 
 		return childElement;
+	}
+
+	public static String convertDocumentToString(Document document) {
+		try {
+			Transformer transformer = EnhancedCDTMain.tf.newTransformer();
+			StringWriter stringWriter = new StringWriter();
+			transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
+			return stringWriter.toString();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static Document convertStringToDocument(String xmlString) {
+		try {
+			DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();
+			InputSource inputSource = new InputSource(new StringReader(xmlString));
+			return builder.parse(inputSource);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 }

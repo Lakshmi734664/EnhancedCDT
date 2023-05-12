@@ -46,7 +46,7 @@ public class EnhancedCDTMain {
 
 			switch (mode) {
 			case "--help":
-				new CDTHelper().showPropertiesFileHelpMsg();
+				CDTHelper.showPropertiesFileHelpMsg();
 				break;
 			case "--merge":
 				fileReader.readPropertiesFile();
