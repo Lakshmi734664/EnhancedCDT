@@ -50,12 +50,13 @@ public class EnhancedCDTMain {
 				break;
 			case "--merge":
 				fileReader.readPropertiesFile();
-				// fileReader.populateRecordIdentifier();
+				 fileReader.populateRecordIdentifier();
 				mergeCDTReports(fileReader, fileWriter);
-				fileWriter.readDataFromExcelSheet();
+			//	fileWriter.readDataFromExcelSheet();
 				break;
 			case "--mergeManualReview":
 				fileReader.readPropertiesFile();
+				fileWriter.mergeAfterReview(CDT_REPORT_DIR1_OUT);
 				fileWriter.mergeAfterReview(CDT_REPORT_DIR2_OUT);
 			}
 		} catch (IOException e) {

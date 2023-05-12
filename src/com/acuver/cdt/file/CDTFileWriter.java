@@ -79,14 +79,14 @@ public class CDTFileWriter {
 
 			fullPath = CDTConstants.currentDirectory + File.separator + timeStamp;
 
-			createDirectory(fullPath + File.separator + "manual");
-			createDirectory(fullPath + File.separator + "enhancedcompare");
+			createDirectory(fullPath + File.separator+CDTConstants.manual);
+			createDirectory(fullPath + File.separator + CDTConstants.enhancedCompare);
 		} else {
 
 			fullPath = location + File.separator + timeStamp;
 
-			createDirectory(fullPath + File.separator + "manual");
-			createDirectory(fullPath + File.separator + "enhancedcompare");
+			createDirectory(fullPath + File.separator+CDTConstants.manual);
+			createDirectory(fullPath + File.separator + CDTConstants.enhancedCompare);
 		}
 
 		return fullPath;
@@ -215,7 +215,7 @@ public class CDTFileWriter {
 
 	public void mergeAfterReview(String parentFolderName) {
 
-		String manualFolderName = parentFolderName + "\\manual";
+		String manualFolderName = parentFolderName  +File.separator+CDTConstants.manual;
 		File manualFolder = new File(manualFolderName);
 		File parentFolder = new File(parentFolderName);
 
@@ -266,7 +266,7 @@ public class CDTFileWriter {
 			XSSFSheet sheet = Workbook.getSheetAt(0);
 
 			// create FileWriter object for output file
-			FileWriter writer = new FileWriter(outputFile, true);
+			FileWriter writer = new FileWriter(outputFile);
 
 			int rows = sheet.getLastRowNum();
 			int cols = sheet.getRow(0).getLastCellNum();
@@ -292,11 +292,11 @@ public class CDTFileWriter {
 					}
 
 					if (c == 0) {
-						System.out.print(cell.getStringCellValue() + " = ");
-						writer.write(cell.getStringCellValue() + " = ");
-					} else if (c == 2) {
-						System.out.print(cell.getStringCellValue() + " | ");
-						writer.write(cell.getStringCellValue() + " | ");
+						System.out.print(cell.getStringCellValue() + "=");
+						writer.write(cell.getStringCellValue() + "=");
+					} else if (c==2) {
+						System.out.print(cell.getStringCellValue()+"|");
+						writer.write(cell.getStringCellValue()+"|");
 					} else {
 						String input = cell.getStringCellValue();
 
@@ -319,12 +319,10 @@ public class CDTFileWriter {
 					}
 
 				}
-
 				// move to the next line in the output file
 				writer.write("\n");
 				System.out.println();
 			}
-
 			// close input stream and writer
 			inputStream.close();
 			writer.close();
