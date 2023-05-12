@@ -18,4 +18,6 @@ public class CDTConstants {
 	public static final String currentDirectory = System.getProperty("user.dir");
 	public static final String organizationCode = "OrganizationCode";
 	public static final String processTypeKey = "ProcessTypeKey";
+	public static final String manual = "manual";
+	public static final String enhancedCompare = "enhancedCompare";
 }
