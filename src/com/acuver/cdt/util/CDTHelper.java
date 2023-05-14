@@ -1,21 +1,18 @@
 package com.acuver.cdt.util;
 
-import java.io.StringReader;
-import java.io.StringWriter;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
+import com.acuver.cdt.EnhancedCDTMain;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import com.acuver.cdt.EnhancedCDTMain;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringReader;
+import java.io.StringWriter;
 
 public class CDTHelper {
 
@@ -32,7 +29,31 @@ public class CDTHelper {
 		printMsg(message);
 	}
 
-	public static Element createChildElement(Element element, String childName) {
+    // Get Table Primary Key Name
+    public static String getTablePrefix(String tableName) {
+        int beginIndex = tableName.indexOf("_");
+        String name = tableName.substring(beginIndex).toLowerCase();
+        name = name.replace("_", " ");
+        System.out.println("name: " + name);
+        char[] charArray = name.toCharArray();
+        boolean foundSpace = true;
+        for (int i = 0; i < charArray.length; i++) {
+            if (Character.isLetter(charArray[i])) {
+                if (foundSpace) {
+                    charArray[i] = Character.toUpperCase(charArray[i]);
+                    foundSpace = false;
+                }
+            } else {
+                foundSpace = true;
+            }
+        }
+        String tablePrefix = String.valueOf(charArray);
+        tablePrefix = tablePrefix.replaceAll("\\s", "");
+        return tablePrefix;
+    }
+
+
+    public static Element createChildElement(Element element, String childName) {
 		Document doc = element.getOwnerDocument();
 		Element childElement = doc.createElement(childName);
 		element.appendChild(childElement);

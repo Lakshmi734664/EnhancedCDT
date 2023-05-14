@@ -118,23 +118,13 @@ public class CDTFileReader {
 	}
 
 	// Read File From Directory
-	public Document readFileFromDir(String directory, String fileName) {
-		// Creating a File object for directory
-		File directoryPath = new File(directory);
-		// List of all files and directories
-		File filesList[] = directoryPath.listFiles();
-		String fileData = "";
-		if (filesList != null && filesList.length > 0) {
-			for (File file : filesList) {
-				if (file != null && file.length() > 0) {
-					if (file.getName().startsWith(fileName)) {
-						fileData = file.toString();
-					}
-				}
-			}
-		}
-
-		return CDTHelper.convertStringToDocument(fileData);
-
-	}
+    public Document readFileFromDir(String directory, String fileName) throws Exception {
+        // Creating a File object for directory
+        File file = new File(directory + File.separator + fileName );
+        if(file != null) {
+            DocumentBuilder documentBuilder = EnhancedCDTMain.factory.newDocumentBuilder();
+            return documentBuilder.parse(file);
+        }
+        return null;
+    }
 }

@@ -13,15 +13,9 @@ import org.xmlunit.diff.Difference;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
-
 import java.io.File;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,58 +32,8 @@ public class CDTXmlComparator {
 	private CDTFileReader fileReader;
 	private CDTFileWriter fileWriter;
 	private CDTXmlDifferenceEvaluator CDTXmlDifferenceEvaluator = new CDTXmlDifferenceEvaluator();
-	private CDTHelper cdtHelper = new CDTHelper();
-
-	private RecordIdentifer recordIdentifer = new RecordIdentifer();
-
-	public String getTableName() {
-		return tableName;
-	}
-
-	public void setTableName(String tableName) {
-		this.tableName = tableName;
-	}
-
-	public String getTablePrefix() {
-		return tablePrefix;
-	}
-
-	public void setTablePrefix(String tablePrefix) {
-		this.tablePrefix = tablePrefix;
-	}
-
-	public Document getInputDoc() {
-		return inputDoc;
-	}
-
-	public void setInputDoc(Document inputDoc) {
-		this.inputDoc = inputDoc;
-	}
-
-	public String getOutDir() {
-		return outDir;
-	}
-
-	public void setOutDir(String outDir) {
-		this.outDir = outDir;
-	}
-
-	public CDTFileReader getFileReader() {
-		return fileReader;
-	}
-
-	public void setFileReader(CDTFileReader fileReader) {
-		this.fileReader = fileReader;
-	}
-
-	public CDTFileWriter getFileWriter() {
-		return fileWriter;
-	}
-
-	public void setFileWriter(CDTFileWriter fileWriter) {
-		this.fileWriter = fileWriter;
-	}
-
+    private RecordIdentifer recordIdentifer = new RecordIdentifer();
+	private boolean isXML1 = true;
 	public Document merge() throws Exception {
 
 		Element root = inputDoc.getDocumentElement();
@@ -97,12 +41,13 @@ public class CDTXmlComparator {
 		System.out.println("tableName : " + tableName);
 
 		// Getting the Table Prefix Name
-		tablePrefix = getTablePrefix(tableName);
+		tablePrefix = CDTHelper.getTablePrefix(tableName);
 		String primaryKeyName = tablePrefix + "Key";
 		CDTXmlDifferenceEvaluator.setPrimaryKeyName(primaryKeyName);
 
 		recordIdentifer.setTableName(tableName);
 		recordIdentifer.setTablePrefix(tablePrefix);
+        recordIdentifer.setFileReader(fileReader);
 
 		// Processing Insert/Delete Tags
 		inputDoc = processInsertDeleteElements(inputDoc);
@@ -162,7 +107,7 @@ public class CDTXmlComparator {
 
 					updateElement.setAttribute(primaryKeyName, primaryKeyValue);
 
-					Element oldValuesElement = cdtHelper.createChildElement(updateElement, "OldValues");
+					Element oldValuesElement = CDTHelper.createChildElement(updateElement, "OldValues");
 
 					// Store the difference values in the OldValues element
 					Iterator<Difference> iter = diff.getDifferences().iterator();
@@ -574,17 +519,14 @@ public class CDTXmlComparator {
 			// An instance of builder to parse the specified xml file
 			DocumentBuilder db = null;
 			db = dbf.newDocumentBuilder();
-			Document cdtxmls1doc = null;
+
 			Document cdtxmls2doc = null;
 			String Xmls1Modifyts = null;
 			String Xmls2Modifyts = null;
 
 			// Getting file from Directory CDT_XMLS1
-			String file1Data = CDTHelper
-					.convertDocumentToString(fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS1, parentNodeName));
-			if (file1Data != null && !file1Data.isEmpty()) {
-				cdtxmls1doc = db.parse(file1Data);
-				NodeList Xmls1NodeList = cdtxmls1doc.getDocumentElement().getChildNodes();
+            Document cdtxmls1doc = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS1, parentNodeName+".cdt.xml");
+            NodeList Xmls1NodeList = cdtxmls1doc.getDocumentElement().getChildNodes();
 				System.out.println("Xmls1NodeList Length : " + Xmls1NodeList.getLength());
 				for (int Xmls1Nodeitr = 0; Xmls1Nodeitr < Xmls1NodeList.getLength(); Xmls1Nodeitr++) {
 					Node xmls1Node = Xmls1NodeList.item(Xmls1Nodeitr);
@@ -599,7 +541,7 @@ public class CDTXmlComparator {
 						}
 					}
 				}
-			}
+
 
 			// Getting file from Directory CDT_XMLS2
 			String file2Data = CDTHelper
@@ -660,60 +602,21 @@ public class CDTXmlComparator {
 		return attrValue.startsWith("<?xml");
 	}
 
-	// Get Table Primary Key Name
-	private String getTablePrefix(String tableName) {
-		int beginIndex = tableName.indexOf("_");
-		String name = tableName.substring(beginIndex).toLowerCase();
-		name = name.replace("_", " ");
-		System.out.println("name: " + name);
-		char[] charArray = name.toCharArray();
-		boolean foundSpace = true;
-		for (int i = 0; i < charArray.length; i++) {
-			if (Character.isLetter(charArray[i])) {
-				if (foundSpace) {
-					charArray[i] = Character.toUpperCase(charArray[i]);
-					foundSpace = false;
-				}
-			} else {
-				foundSpace = true;
-			}
-		}
-		String tablePrefix = String.valueOf(charArray);
-		tablePrefix = tablePrefix.replaceAll("\\s", "");
-		return tablePrefix;
-	}
 
 	// remove delete tag from document
-	public Document removeDeleteTags(Document doc) throws Exception {
-
-		NodeList nodes = doc.getElementsByTagName("Delete");
-
-		for (int i = nodes.getLength() - 1; i >= 0; i--) {
-			Node node = nodes.item(i);
-			node.getParentNode().removeChild(node);
-		}
-
-		// Create a transformer to serialize the document to a string
-		Transformer transformer = EnhancedCDTMain.tf.newTransformer();
-		transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-		StringWriter writer = new StringWriter();
-		StreamResult result = new StreamResult(writer);
-		transformer.transform(new DOMSource(doc), result);
-
-		// Remove all blank lines from the serialized string
-		String xmlString = writer.toString();
-		Pattern pattern = Pattern.compile("(?m)^\\s*$[\n\r]{1,}", Pattern.MULTILINE);
-		xmlString = pattern.matcher(xmlString).replaceAll("");
-
-		// Parse the modified string back into a DOM document
-		DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();
-		InputSource inputSource = new InputSource(new StringReader(xmlString));
-		Document doc1 = builder.parse(inputSource);
-		return doc1;
-
-	}
-
-	public void debug(Document doc, String s) throws Exception {
+    public Document removeDeleteTags(Document doc) throws Exception {
+        debug(doc, "Before removeDeleteTags");
+        NodeList deleteNodesList = doc.getElementsByTagName(CDTConstants.DELETE);
+        Element rootEle = doc.getDocumentElement();
+        int length = deleteNodesList.getLength();
+        for (int i = 0; i < length; i++) {
+            Node node = deleteNodesList.item(i);
+            rootEle.removeChild(node);
+        }
+        debug(doc, "Before removeDeleteTags");
+        return doc;
+    }
+        public void debug(Document doc, String s) throws Exception {
 		String expression = "//" + CDTConstants.INSERT;
 		NodeList nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 		System.out.println(s + "  Insert nodeList Length() " + nodeList.getLength());
@@ -726,5 +629,24 @@ public class CDTXmlComparator {
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 		System.out.println(s + "  Update nodeList Length() " + nodeList.getLength());
 	}
+
+    public void setInputDoc(Document inputDoc) {
+        this.inputDoc = inputDoc;
+    }
+    public void setOutDir(String outDir) {
+        this.outDir = outDir;
+    }
+    public void setFileReader(CDTFileReader fileReader) {
+        this.fileReader = fileReader;
+    }
+    public void setFileWriter(CDTFileWriter fileWriter) {
+        this.fileWriter = fileWriter;
+    }
+    public boolean isXML1() {
+        return isXML1;
+    }
+    public void setXML1(boolean XML1) {
+        isXML1 = XML1;
+    }
 
 }
