@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,15 +12,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMResult;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
 
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -32,15 +26,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 import com.acuver.cdt.EnhancedCDTMain;
 import com.acuver.cdt.util.CDTConstants;
 import com.acuver.cdt.util.CDTHelper;
 
 public class CDTFileWriter {
-
-	
 
 	public void appendXmlFile(File sourceFile, File destFile) {
 		try {
@@ -80,20 +71,20 @@ public class CDTFileWriter {
 
 	public String createOutDir(String location) throws IOException {
 
-	    String fullPath = "";
+		String fullPath = "";
 		String timeStamp = new SimpleDateFormat(CDTConstants.dateFormat).format(new Date());
 
 		if (location == null) {
 
 			fullPath = CDTConstants.currentDirectory + File.separator + timeStamp;
 
-			createDirectory(fullPath + File.separator+CDTConstants.manual);
+			createDirectory(fullPath + File.separator + CDTConstants.manual);
 			createDirectory(fullPath + File.separator + CDTConstants.enhancedCompare);
 		} else {
 
 			fullPath = location + File.separator + timeStamp;
 
-			createDirectory(fullPath + File.separator+CDTConstants.manual);
+			createDirectory(fullPath + File.separator + CDTConstants.manual);
 			createDirectory(fullPath + File.separator + CDTConstants.enhancedCompare);
 		}
 
@@ -103,30 +94,33 @@ public class CDTFileWriter {
 	// Writing File to a Directory
 	public void writeFile(String fullPath, Document outputDoc, String fileName) throws Exception {
 		try {
-			String fileData = CDTHelper.convertDocumentToString( convertDocumentinPrettyFormat(outputDoc));
+			CDTFileWriter fileWriter = new CDTFileWriter();
+			String fileData = CDTHelper.convertDocumentToString(fileWriter.prettyPrintXml(outputDoc));
 			createXMLFile(fullPath, fileName, fileData);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
- 
-	public  Document convertDocumentinPrettyFormat(Document document) {
-        try {
-        	
-            Transformer transformer = EnhancedCDTMain.tf.newTransformer();
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-            StringWriter stringWriter = new StringWriter();
-          
-            transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
-            
-            return CDTHelper.convertStringToDocument(stringWriter.toString().replaceAll("\\n\\s*\\n", "\n"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+	public Document prettyPrintXml(Document document) {
+		try {
 
+			EnhancedCDTMain.tf.setAttribute("indent-number", 4); // Adjust the indentation level as needed
+			Transformer transformer = EnhancedCDTMain.tf.newTransformer();
+			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+			DOMSource source = new DOMSource(document);
+			StringWriter writer = new StringWriter();
+			StreamResult result = new StreamResult(writer);
+
+			transformer.transform(source, result);
+			return CDTHelper.convertStringToDocument(writer.toString().replaceAll("\\n\\s*\\n", "\n"));
+		} catch (TransformerException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 	public void createXMLFile(String fileLocation, String fileName, String fileData)
 			throws IllegalArgumentException, IOException {
@@ -147,7 +141,7 @@ public class CDTFileWriter {
 				if (!file.exists()) {
 					file.createNewFile();
 				}
-                
+
 				// Create a new FileWriter object to write to the file
 				writer = new FileWriter(file);
 
@@ -202,7 +196,7 @@ public class CDTFileWriter {
 
 	public void mergeAfterReview(String parentFolderName) {
 
-		String manualFolderName = parentFolderName  +File.separator+CDTConstants.manual;
+		String manualFolderName = parentFolderName + File.separator + CDTConstants.manual;
 		File manualFolder = new File(manualFolderName);
 		File parentFolder = new File(parentFolderName);
 
@@ -281,9 +275,9 @@ public class CDTFileWriter {
 					if (c == 0) {
 						System.out.print(cell.getStringCellValue() + "=");
 						writer.write(cell.getStringCellValue() + "=");
-					} else if (c==2) {
-						System.out.print(cell.getStringCellValue()+"|");
-						writer.write(cell.getStringCellValue()+"|");
+					} else if (c == 2) {
+						System.out.print(cell.getStringCellValue() + "|");
+						writer.write(cell.getStringCellValue() + "|");
 					} else {
 						String input = cell.getStringCellValue();
 

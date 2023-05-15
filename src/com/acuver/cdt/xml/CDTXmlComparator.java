@@ -64,7 +64,7 @@ public class CDTXmlComparator {
 		// inputDoc = removeDeleteTags(inputDoc);
 
 		System.out.println("After Merge OutDoc:"
-				+ CDTHelper.convertDocumentToString(fileWriter.convertDocumentinPrettyFormat(inputDoc)));
+				+ CDTHelper.convertDocumentToString(fileWriter.prettyPrintXml(inputDoc)));
 		return inputDoc;
 	}
 
@@ -319,12 +319,12 @@ public class CDTXmlComparator {
 		Document oldAttrSubxmlDoc = EnhancedCDTMain.factory.newDocumentBuilder()
 				.parse(new InputSource(new StringReader(subXmlOldAttrValue)));
 		System.out.println("oldAttrSubxmlDoc:"
-				+ CDTHelper.convertDocumentToString(fileWriter.convertDocumentinPrettyFormat(oldAttrSubxmlDoc)));
+				+ CDTHelper.convertDocumentToString(fileWriter.prettyPrintXml(oldAttrSubxmlDoc)));
 
 		Document updateAttrSubxmlDoc = EnhancedCDTMain.factory.newDocumentBuilder()
 				.parse(new InputSource(new StringReader(subXmlUpdateAttrValue)));
 		System.out.println("updateAttrSubxmlDoc:"
-				+ CDTHelper.convertDocumentToString(fileWriter.convertDocumentinPrettyFormat(updateAttrSubxmlDoc)));
+				+ CDTHelper.convertDocumentToString(fileWriter.prettyPrintXml(updateAttrSubxmlDoc)));
 
 		for (int i = 0; i < subXmlDiffDataList.size(); i++) {
 			String diffValues = subXmlDiffDataList.get(i);
