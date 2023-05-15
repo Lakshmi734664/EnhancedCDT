@@ -12,7 +12,6 @@ import org.xmlunit.diff.Diff;
 import org.xmlunit.diff.Difference;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPathConstants;
 import java.io.File;
 import java.io.StringReader;
@@ -32,8 +31,9 @@ public class CDTXmlComparator {
 	private CDTFileReader fileReader;
 	private CDTFileWriter fileWriter;
 	private CDTXmlDifferenceEvaluator CDTXmlDifferenceEvaluator = new CDTXmlDifferenceEvaluator();
-    private RecordIdentifer recordIdentifer = new RecordIdentifer();
+	private RecordIdentifer recordIdentifer = new RecordIdentifer();
 	private boolean isXML1 = true;
+
 	public Document merge() throws Exception {
 
 		Element root = inputDoc.getDocumentElement();
@@ -47,7 +47,7 @@ public class CDTXmlComparator {
 
 		recordIdentifer.setTableName(tableName);
 		recordIdentifer.setTablePrefix(tablePrefix);
-        recordIdentifer.setFileReader(fileReader);
+		recordIdentifer.setFileReader(fileReader);
 
 		// Processing Insert/Delete Tags
 		inputDoc = processInsertDeleteElements(inputDoc);
@@ -58,7 +58,7 @@ public class CDTXmlComparator {
 		// Processing Update Elements with EnhancedCompare
 		addEnhancedCompareToUpdates(inputDoc);
 
-		// moveUpdatesToManualReview(inputDoc);
+		// Moving Update Elements to Manual Folder
 		moveUpdatesToManualReview(inputDoc);
 
 		// inputDoc = removeDeleteTags(inputDoc);
@@ -498,8 +498,6 @@ public class CDTXmlComparator {
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 		System.out.println("Update nodeList Length : " + nodeList.getLength());
 		String primaryKeyName = tablePrefix + "Key";
-		CDTFileWriter fileWriter = new CDTFileWriter();
-		CDTFileReader fileReader = new CDTFileReader();
 
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
@@ -517,17 +515,12 @@ public class CDTXmlComparator {
 			String primaryKeyValue = updateElement.getAttribute(primaryKeyName);
 			System.out.println("primaryKeyValue of Update Node : " + primaryKeyValue);
 
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-			// An instance of builder to parse the specified xml file
-			DocumentBuilder db = null;
-			db = dbf.newDocumentBuilder();
-
 			String Xmls1Modifyts = null;
 			String Xmls2Modifyts = null;
 
 			// Getting file from Directory CDT_XMLS1
-            Document cdtxmls1doc = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS1, parentNodeName+".cdt.xml");
-            NodeList Xmls1NodeList = cdtxmls1doc.getDocumentElement().getChildNodes();
+			Document cdtxmls1doc = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS1, parentNodeName + ".cdt.xml");
+			if (cdtxmls1doc != null) {
 				NodeList Xmls1NodeList = cdtxmls1doc.getDocumentElement().getChildNodes();
 				System.out.println("Xmls1NodeList Length : " + Xmls1NodeList.getLength());
 				for (int Xmls1Nodeitr = 0; Xmls1Nodeitr < Xmls1NodeList.getLength(); Xmls1Nodeitr++) {
@@ -543,14 +536,10 @@ public class CDTXmlComparator {
 						}
 					}
 				}
-
 			}
 
 			// Getting file from Directory CDT_XMLS2
-			String file2Data = CDTHelper
-					.convertDocumentToString(fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS2, parentNodeName));
-			if (file2Data != null && !file2Data.isEmpty()) {
-				cdtxmls2doc = db.parse(file2Data);
+			Document cdtxmls2doc = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS2, parentNodeName + ".cdt.xml");
 			if (cdtxmls2doc != null) {
 				recordIdentifer.setDoc(cdtxmls2doc);
 				recordIdentifer.setElemToMatch(updateElement);
@@ -586,6 +575,8 @@ public class CDTXmlComparator {
 					Node importedUpdateNode = processedManualReviewDoc.importNode(updateNode, true);
 					processedManualReviewDoc.getDocumentElement().appendChild(importedUpdateNode);
 
+					// Removing this update Node from inputDoc
+					inputDoc.getDocumentElement().removeChild(updateNode);
 				}
 			}
 		}
@@ -607,21 +598,10 @@ public class CDTXmlComparator {
 		return attrValue.startsWith("<?xml");
 	}
 
-
 	// remove delete tag from document
-    public Document removeDeleteTags(Document doc) throws Exception {
-        debug(doc, "Before removeDeleteTags");
-        NodeList deleteNodesList = doc.getElementsByTagName(CDTConstants.DELETE);
-        Element rootEle = doc.getDocumentElement();
-        int length = deleteNodesList.getLength();
-        for (int i = 0; i < length; i++) {
-            Node node = deleteNodesList.item(i);
-            rootEle.removeChild(node);
-        }
-        debug(doc, "Before removeDeleteTags");
-        return doc;
-    }
-        public void debug(Document doc, String s) throws Exception {
+	public Document removeDeleteTags(Document doc) throws Exception {
+		debug(doc, "Before removeDeleteTags");
+		NodeList deleteNodesList = doc.getElementsByTagName(CDTConstants.DELETE);
 		Element rootEle = doc.getDocumentElement();
 		int length = deleteNodesList.getLength();
 		for (int i = 0; i < length; i++) {
