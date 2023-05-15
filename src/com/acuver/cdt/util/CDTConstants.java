@@ -20,4 +20,6 @@ public class CDTConstants {
 	public static final String processTypeKey = "ProcessTypeKey";
 	public static final String manual = "manual";
 	public static final String enhancedCompare = "enhancedCompare";
+	public static final String CDT_REPORT_OUT_DIR1 = "CDT_REPORT_OUT_DIR1";
+	public static final String CDT_REPORT_OUT_DIR2 = "CDT_REPORT_OUT_DIR2";
 }

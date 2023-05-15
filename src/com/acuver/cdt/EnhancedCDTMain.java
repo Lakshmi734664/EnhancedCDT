@@ -3,6 +3,7 @@ package com.acuver.cdt;
 import com.acuver.cdt.file.CDTFileReader;
 import com.acuver.cdt.file.CDTFileWriter;
 import com.acuver.cdt.util.CDTHelper;
+import com.acuver.cdt.util.CDTConstants;
 import com.acuver.cdt.xml.CDTXmlComparator;
 import org.w3c.dom.Document;
 
@@ -32,8 +33,9 @@ public class EnhancedCDTMain {
 	public static ArrayList<String> ydkPerf1IgnoreTables = null;
 	public static ArrayList<String> ydkPerf2IgnoreTables = null;
 	// merged reports directories
-	public static String CDT_REPORT_DIR1_OUT = null;
-	public static String CDT_REPORT_DIR2_OUT = null;
+	
+	public static String CDT_REPORT_OUT_DIR1 = null; 
+	public static String CDT_REPORT_OUT_DIR2 = null;
 	public static Map<String, String> recordIdentifierMap;
 
 	public static void main(String[] argMode) throws Exception {
@@ -49,15 +51,17 @@ public class EnhancedCDTMain {
 				CDTHelper.showPropertiesFileHelpMsg();
 				break;
 			case "--merge":
-				fileReader.readPropertiesFile();
+				 fileReader.readPropertiesFile();
 				 fileReader.populateRecordIdentifier();
 				mergeCDTReports(fileReader, fileWriter);
 			//	fileWriter.readDataFromExcelSheet();
 				break;
 			case "--mergeManualReview":
 				fileReader.readPropertiesFile();
-				fileWriter.mergeAfterReview(CDT_REPORT_DIR1_OUT);
-				fileWriter.mergeAfterReview(CDT_REPORT_DIR2_OUT);
+				System.out.println("CDT_REPORT_OUT_DIR1 : "+CDT_REPORT_OUT_DIR1);
+				System.out.println("CDT_REPORT_OUT_DIR2 : "+CDT_REPORT_OUT_DIR2);
+				fileWriter.mergeAfterReview(CDT_REPORT_OUT_DIR1);
+				//fileWriter.mergeAfterReview(CDT_REPORT_OUT_DIR2);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -76,10 +80,10 @@ public class EnhancedCDTMain {
 				System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
 			}
 			if (filesList != null && filesList.length > 0) {
-				CDT_REPORT_DIR1_OUT = fileWriter.createOutDir(OUTPUT_DIR);
+				CDT_REPORT_OUT_DIR1 = fileWriter.createOutDir(OUTPUT_DIR);
 
 				for (File f : filesList) {
-					processFile(f, CDT_REPORT_DIR1_OUT, fileReader, fileWriter);
+					processFile(f, CDT_REPORT_OUT_DIR1, fileReader, fileWriter);
 				}
 
 			}

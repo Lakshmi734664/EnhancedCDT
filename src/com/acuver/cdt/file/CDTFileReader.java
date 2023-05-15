@@ -19,6 +19,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class CDTFileReader {
+	CDTFileWriter fileWriter = new CDTFileWriter();
 	public void readPropertiesFile() throws Exception {
 
 		File enhancedcdtfile = new File(CDTConstants.currentDirectory + File.separator + "enhancedcdt.properties");
@@ -54,6 +55,8 @@ public class CDTFileReader {
 		EnhancedCDTMain.CDT_XMLS1 = prop.getProperty(CDTConstants.CDT_XMLS1);
 		EnhancedCDTMain.CDT_XMLS2 = prop.getProperty(CDTConstants.CDT_XMLS2);
 		EnhancedCDTMain.OUTPUT_DIR = prop.getProperty(CDTConstants.OUTPUT_DIR);
+		EnhancedCDTMain.CDT_REPORT_OUT_DIR1 = fileWriter.createOutDir(EnhancedCDTMain.OUTPUT_DIR);
+		EnhancedCDTMain.CDT_REPORT_OUT_DIR2 = fileWriter.createOutDir(EnhancedCDTMain.OUTPUT_DIR);
 
 		if (EnhancedCDTMain.CDT_REPORT_DIR1 != null && EnhancedCDTMain.CDT_REPORT_DIR1.trim().isEmpty()
 				|| EnhancedCDTMain.CDT_REPORT_DIR2 != null && EnhancedCDTMain.CDT_REPORT_DIR2.trim().isEmpty()
