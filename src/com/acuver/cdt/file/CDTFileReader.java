@@ -19,7 +19,6 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class CDTFileReader {
-	CDTFileWriter fileWriter = new CDTFileWriter();
 
 	public void readPropertiesFile() throws Exception {
 
@@ -56,17 +55,19 @@ public class CDTFileReader {
 		EnhancedCDTMain.CDT_XMLS1 = prop.getProperty(CDTConstants.CDT_XMLS1);
 		EnhancedCDTMain.CDT_XMLS2 = prop.getProperty(CDTConstants.CDT_XMLS2);
 		EnhancedCDTMain.OUTPUT_DIR = prop.getProperty(CDTConstants.OUTPUT_DIR);
-		EnhancedCDTMain.CDT_REPORT_OUT_DIR1 = fileWriter.createOutDir(EnhancedCDTMain.OUTPUT_DIR);
-		EnhancedCDTMain.CDT_REPORT_OUT_DIR2 = fileWriter.createOutDir(EnhancedCDTMain.OUTPUT_DIR);
-
+		EnhancedCDTMain.YDKPREF1 = prop.getProperty(CDTConstants.YDKPREF1);
+		EnhancedCDTMain.YDKPREF2 = prop.getProperty(CDTConstants.YDKPREF2);
+		EnhancedCDTMain.CDT_REPORT_OUT_DIR1 = prop.getProperty(CDTConstants.CDT_REPORT_OUT_DIR1);
+		EnhancedCDTMain.CDT_REPORT_OUT_DIR2 = prop.getProperty(CDTConstants.CDT_REPORT_OUT_DIR2);
+		
 		if (EnhancedCDTMain.CDT_REPORT_DIR1 != null && EnhancedCDTMain.CDT_REPORT_DIR1.trim().isEmpty()
 				|| EnhancedCDTMain.CDT_REPORT_DIR2 != null && EnhancedCDTMain.CDT_REPORT_DIR2.trim().isEmpty()
 				|| EnhancedCDTMain.CDT_XMLS1 != null && EnhancedCDTMain.CDT_XMLS1.trim().isEmpty()
-				|| EnhancedCDTMain.CDT_XMLS2 != null && EnhancedCDTMain.CDT_XMLS2.trim().isEmpty()) {
+				|| EnhancedCDTMain.CDT_XMLS2 != null && EnhancedCDTMain.CDT_XMLS2.trim().isEmpty() 
+				|| EnhancedCDTMain.OUTPUT_DIR  != null && EnhancedCDTMain.OUTPUT_DIR .trim().isEmpty()) {
 			CDTHelper.showPropertiesFileHelpMsg();
 			System.exit(1);
 		}
-
 	}
 
 	public void populateRecordIdentifier() {
@@ -81,7 +82,7 @@ public class CDTFileReader {
 		EnhancedCDTMain.recordIdentifierMap.putAll(properties.entrySet().stream()
 				.collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString())));
 	}
-
+	
 	public ArrayList<String> readYDKPrefs(String ydkperfs) throws Exception {
 
 		ArrayList<String> tableNamesList = new ArrayList<String>();
@@ -119,13 +120,13 @@ public class CDTFileReader {
 	}
 
 	// Read File From Directory
-	public Document readFileFromDir(String directory, String fileName) throws Exception {
-		// Creating a File object for directory
-		File file = new File(directory + File.separator + fileName);
-		if (file != null) {
-			DocumentBuilder documentBuilder = EnhancedCDTMain.factory.newDocumentBuilder();
-			return documentBuilder.parse(file);
-		}
-		return null;
-	}
+    public Document readFileFromDir(String directory, String fileName) throws Exception {
+        // Creating a File object for directory
+        File file = new File(directory + File.separator + fileName );
+        if(file != null) {
+            DocumentBuilder documentBuilder = EnhancedCDTMain.factory.newDocumentBuilder();
+            return documentBuilder.parse(file);
+        }
+        return null;
+    }
 }
