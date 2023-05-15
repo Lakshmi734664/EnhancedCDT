@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 public class CDTFileReader {
 	CDTFileWriter fileWriter = new CDTFileWriter();
+
 	public void readPropertiesFile() throws Exception {
 
 		File enhancedcdtfile = new File(CDTConstants.currentDirectory + File.separator + "enhancedcdt.properties");
@@ -83,32 +84,29 @@ public class CDTFileReader {
 
 	public ArrayList<String> readYDKPrefs(String ydkperfs) throws Exception {
 
-		File[] ydfPref1FilesList = readFilesFromDir(ydkperfs);
 		ArrayList<String> tableNamesList = new ArrayList<String>();
-		if (ydfPref1FilesList != null && ydfPref1FilesList.length > 0) {
-			for (File file : ydfPref1FilesList) {
-				if (file != null && file.length() > 0) {
-					DocumentBuilder db = null;
-					db = EnhancedCDTMain.factory.newDocumentBuilder();
-					Document doc = null;
-					doc = db.parse(file);
-					String expression = "//" + "Ignore" + "//" + "Table";
-					NodeList nodeList = null;
-					nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
-							XPathConstants.NODESET);
-					System.out.println("nodeList Length: " + nodeList.getLength());
-					for (int itr = 0; itr < nodeList.getLength(); itr++) {
-						Element tableElement = (Element) nodeList.item(itr);
-						String tableName = tableElement.getAttribute("Name");
-						if (tableName != null && !tableName.isEmpty()) {
-							tableName = tableName + ".xml";
-							tableNamesList.add(tableName);
-						}
-					}
-					System.out.println("tableNamesList : " + tableNamesList.toString());
+		File file = new File(ydkperfs);
+
+		if (file != null && file.length() > 0) {
+			DocumentBuilder db = null;
+			db = EnhancedCDTMain.factory.newDocumentBuilder();
+			Document doc = null;
+			doc = db.parse(file);
+			String expression = "//" + "Ignore" + "//" + "Table";
+			NodeList nodeList = null;
+			nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
+			System.out.println("nodeList Length: " + nodeList.getLength());
+			for (int itr = 0; itr < nodeList.getLength(); itr++) {
+				Element tableElement = (Element) nodeList.item(itr);
+				String tableName = tableElement.getAttribute("Name");
+				if (tableName != null && !tableName.isEmpty()) {
+					tableName = tableName + ".xml";
+					tableNamesList.add(tableName);
 				}
 			}
+			System.out.println("tableNamesList : " + tableNamesList.toString());
 		}
+
 		return tableNamesList;
 	}
 
@@ -121,13 +119,13 @@ public class CDTFileReader {
 	}
 
 	// Read File From Directory
-    public Document readFileFromDir(String directory, String fileName) throws Exception {
-        // Creating a File object for directory
-        File file = new File(directory + File.separator + fileName );
-        if(file != null) {
-            DocumentBuilder documentBuilder = EnhancedCDTMain.factory.newDocumentBuilder();
-            return documentBuilder.parse(file);
-        }
-        return null;
-    }
+	public Document readFileFromDir(String directory, String fileName) throws Exception {
+		// Creating a File object for directory
+		File file = new File(directory + File.separator + fileName);
+		if (file != null) {
+			DocumentBuilder documentBuilder = EnhancedCDTMain.factory.newDocumentBuilder();
+			return documentBuilder.parse(file);
+		}
+		return null;
+	}
 }
