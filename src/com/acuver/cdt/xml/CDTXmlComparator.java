@@ -604,7 +604,7 @@ public class CDTXmlComparator {
 		NodeList deleteNodesList = doc.getElementsByTagName(CDTConstants.DELETE);
 		Element rootEle = doc.getDocumentElement();
 		int length = deleteNodesList.getLength();
-		for (int i = 0; i < length; i++) {
+		for (int i = length-1; i >=0; i--) {
 			Node node = deleteNodesList.item(i);
 			rootEle.removeChild(node);
 		}
