@@ -45,6 +45,7 @@ public class EnhancedCDTMain {
 			CDTFileWriter fileWriter = new CDTFileWriter();
 
 			String mode = argMode.length > 0 ? argMode[0] : "--merge";
+			//String mode = argMode.length > 0 ? argMode[0] : "--mergeManualReview";
 
 			switch (mode) {
 			case "--help":
@@ -59,7 +60,7 @@ public class EnhancedCDTMain {
 			case "--mergeManualReview":
 				fileReader.readPropertiesFile();
 				System.out.println("CDT_REPORT_OUT_DIR1 : "+CDT_REPORT_OUT_DIR1);
-				System.out.println("CDT_REPORT_OUT_DIR2 : "+CDT_REPORT_OUT_DIR2);
+				
 				fileWriter.mergeAfterReview(CDT_REPORT_OUT_DIR1);
 				//fileWriter.mergeAfterReview(CDT_REPORT_OUT_DIR2);
 			}

@@ -19,7 +19,21 @@ public class CDTConstants {
 	public static final String organizationCode = "OrganizationCode";
 	public static final String processTypeKey = "ProcessTypeKey";
 	public static final String manual = "manual";
-	public static final String enhancedCompare = "enhancedCompare";
+	public static final String enhancedCompare = "EnhancedCompare";
 	public static final String CDT_REPORT_OUT_DIR1 = "CDT_REPORT_OUT_DIR1";
 	public static final String CDT_REPORT_OUT_DIR2 = "CDT_REPORT_OUT_DIR2";
+    public static final String hyphen = "_";
+    public static final String spaces = "\\s";
+    public static final String forwardSlash = "//";
+    public static final String key = "Key";
+    public static final String update = "Update";
+    public static final String attribute = "Attribute";
+    public static final String old = "Old";
+    public static final String New = "New";
+    public static final String id = "id";
+    public static final String code = "code";
+    public static final String name = "name";
+    public static final String xmlExtension = ".xml";
+    public static final String table = "Table";
+    public static final String ignore = "Ignore";
 }

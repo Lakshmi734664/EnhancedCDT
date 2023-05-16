@@ -93,7 +93,7 @@ public class CDTFileReader {
 			db = EnhancedCDTMain.factory.newDocumentBuilder();
 			Document doc = null;
 			doc = db.parse(file);
-			String expression = "//" + "Ignore" + "//" + "Table";
+			String expression = CDTConstants.forwardSlash + CDTConstants.ignore + CDTConstants.forwardSlash + CDTConstants.table;
 			NodeList nodeList = null;
 			nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 			System.out.println("nodeList Length: " + nodeList.getLength());
@@ -101,7 +101,7 @@ public class CDTFileReader {
 				Element tableElement = (Element) nodeList.item(itr);
 				String tableName = tableElement.getAttribute("Name");
 				if (tableName != null && !tableName.isEmpty()) {
-					tableName = tableName + ".xml";
+					tableName = tableName + CDTConstants.xmlExtension;
 					tableNamesList.add(tableName);
 				}
 			}

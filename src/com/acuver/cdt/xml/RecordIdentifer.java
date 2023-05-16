@@ -22,7 +22,7 @@ public class RecordIdentifer {
     public Element getMatchingUniqueElement(boolean isCompareReport) throws Exception {
         Element outEle = null;
         //get the element with primary key value
-        String primaryKeyName = tablePrefix + "Key";
+        String primaryKeyName = tablePrefix + CDTConstants.key;
         String primaryKeyValue = elemToMatch.getAttribute(primaryKeyName);
         if (primaryKeyValue != null && !primaryKeyValue.trim().isEmpty()) {
             outEle = getElementUsingXpath(new StringBuffer("//[@" + primaryKeyName + "='" + primaryKeyValue + "']"), isCompareReport, doc);
@@ -30,7 +30,7 @@ public class RecordIdentifer {
 
         if (outEle != null)
             return outEle;
-        StringBuffer xpathExpr = new StringBuffer("//");
+        StringBuffer xpathExpr = new StringBuffer(CDTConstants.forwardSlash);
         Map<String, String> tblRecordIdentifierMap = getUniqueIdentifier(tableName);
         if (!tblRecordIdentifierMap.isEmpty()) {
 
@@ -48,13 +48,13 @@ public class RecordIdentifer {
         String attrName = tablePrefix.toLowerCase();
         String value = getAttributeValue(attrName);
         if (value == null || value.trim().isEmpty()) {
-            attrName = tablePrefix.toLowerCase() + "id";
+            attrName = tablePrefix.toLowerCase() + CDTConstants.id;
             value = getAttributeValue(attrName);
             if (value == null || value.trim().isEmpty()) {
-                attrName = tablePrefix.toLowerCase() + "code";
+                attrName = tablePrefix.toLowerCase() + CDTConstants.code;
                 value = getAttributeValue(attrName);
                 if (value == null || value.trim().isEmpty()) {
-                    attrName = tablePrefix.toLowerCase() + "name";
+                    attrName = tablePrefix.toLowerCase() + CDTConstants.name;
                     value = getAttributeValue(attrName);
                 }
             }

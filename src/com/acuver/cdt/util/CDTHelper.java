@@ -31,9 +31,9 @@ public class CDTHelper {
 
     // Get Table Primary Key Name
     public static String getTablePrefix(String tableName) {
-        int beginIndex = tableName.indexOf("_");
+        int beginIndex = tableName.indexOf(CDTConstants.hyphen);
         String name = tableName.substring(beginIndex).toLowerCase();
-        name = name.replace("_", " ");
+        name = name.replace(CDTConstants.hyphen, " ");
         System.out.println("name: " + name);
         char[] charArray = name.toCharArray();
         boolean foundSpace = true;
@@ -48,7 +48,7 @@ public class CDTHelper {
             }
         }
         String tablePrefix = String.valueOf(charArray);
-        tablePrefix = tablePrefix.replaceAll("\\s", "");
+        tablePrefix = tablePrefix.replaceAll(CDTConstants.spaces, "");
         return tablePrefix;
     }
 

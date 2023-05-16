@@ -42,7 +42,7 @@ public class CDTXmlComparator {
 
 		// Getting the Table Prefix Name
 		tablePrefix = CDTHelper.getTablePrefix(tableName);
-		String primaryKeyName = tablePrefix + "Key";
+		String primaryKeyName = tablePrefix + CDTConstants.key;
 		CDTXmlDifferenceEvaluator.setPrimaryKeyName(primaryKeyName);
 
 		recordIdentifer.setTableName(tableName);
@@ -72,7 +72,7 @@ public class CDTXmlComparator {
 		System.out.println("Entering processInsertDeleteElements : ");
 		Element rootEle = doc.getDocumentElement();
 
-		String expression = "//" + CDTConstants.INSERT;
+		String expression = CDTConstants.forwardSlash + CDTConstants.INSERT;
 		NodeList nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 		debug(doc, "Before processInsertDeleteElements");
 		for (int itr = 0; itr < nodeList.getLength(); itr++) {
@@ -92,7 +92,7 @@ public class CDTXmlComparator {
 						.withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
 
 				if (diff.hasDifferences()) {
-					Element updateElement = doc.createElement("Update");
+					Element updateElement = doc.createElement(CDTConstants.update);
 					// Replace Insert element with Update element
 					NamedNodeMap attributes = insertElement.getAttributes();
 					for (int j = 0; j < attributes.getLength(); j++) {
@@ -101,14 +101,14 @@ public class CDTXmlComparator {
 
 					}
 
-					String primaryKeyName = tablePrefix + "Key";
+					String primaryKeyName = tablePrefix + CDTConstants.key;
 					System.out.println(primaryKeyName);
 					String primaryKeyValue = deleteElement.getAttribute(primaryKeyName);
 					System.out.println(primaryKeyValue);
 
 					updateElement.setAttribute(primaryKeyName, primaryKeyValue);
 
-					Element oldValuesElement = CDTHelper.createChildElement(updateElement, "OldValues");
+					Element oldValuesElement = CDTHelper.createChildElement(updateElement, CDTConstants.OLDVALUES);
 
 					// Store the difference values in the OldValues element
 					Iterator<Difference> iter = diff.getDifferences().iterator();
@@ -173,7 +173,7 @@ public class CDTXmlComparator {
 	public Document removeFalseUpdates(Document doc) throws Exception {
 		System.out.println("Entering removeFalseUpdates : ");
 		debug(doc, "Before removeFalseUpdates");
-		String expression = "//" + CDTConstants.UPDATE + "//" + CDTConstants.OLDVALUES;
+		String expression = CDTConstants.forwardSlash + CDTConstants.UPDATE + CDTConstants.forwardSlash + CDTConstants.OLDVALUES;
 		NodeList nodeList = null;
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 		System.out.println("Old Values nodeList Length()" + nodeList.getLength());
@@ -236,7 +236,7 @@ public class CDTXmlComparator {
 		Element parentElement = processedUpdateEnhancedCompareDoc.createElement(parentNodeName);
 		processedUpdateEnhancedCompareDoc.appendChild(parentElement);
 
-		String expression = "//" + CDTConstants.UPDATE + "//" + CDTConstants.OLDVALUES;
+		String expression = CDTConstants.forwardSlash + CDTConstants.UPDATE + CDTConstants.forwardSlash + CDTConstants.OLDVALUES;
 		NodeList nodeList = null;
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 
@@ -295,7 +295,7 @@ public class CDTXmlComparator {
 		System.out.println("processedUpdateEnhancedCompareDoc length :  "
 				+ processedUpdateEnhancedCompareDoc.getDocumentElement().getChildNodes().getLength());
 		if (processedUpdateEnhancedCompareDoc.getDocumentElement().getChildNodes().getLength() > 0) {
-			String fileName = parentNodeName + ".xml";
+			String fileName = parentNodeName + CDTConstants.xmlExtension;
 			String fullPath = outDir + File.separator + CDTConstants.enhancedCompare;
 			fileWriter.writeFile(fullPath, processedUpdateEnhancedCompareDoc, fileName);
 		}
@@ -311,10 +311,10 @@ public class CDTXmlComparator {
 		Node importedUpdateNode = processedUpdateEnhancedCompareDoc.importNode(updateNode, true);
 		processedUpdateEnhancedCompareDoc.getDocumentElement().appendChild(importedUpdateNode);
 
-		Element enhancedCompareEle = processedUpdateEnhancedCompareDoc.createElement("EnhancedCompare");
-		Element attributeEle = processedUpdateEnhancedCompareDoc.createElement("Attribute");
-		Element oldAttrEle = processedUpdateEnhancedCompareDoc.createElement("Old");
-		Element newAttrEle = processedUpdateEnhancedCompareDoc.createElement("New");
+		Element enhancedCompareEle = processedUpdateEnhancedCompareDoc.createElement(CDTConstants.enhancedCompare);
+		Element attributeEle = processedUpdateEnhancedCompareDoc.createElement(CDTConstants.attribute);
+		Element oldAttrEle = processedUpdateEnhancedCompareDoc.createElement(CDTConstants.old);
+		Element newAttrEle = processedUpdateEnhancedCompareDoc.createElement(CDTConstants.New);
 
 		Document oldAttrSubxmlDoc = EnhancedCDTMain.factory.newDocumentBuilder()
 				.parse(new InputSource(new StringReader(subXmlOldAttrValue)));
@@ -493,11 +493,11 @@ public class CDTXmlComparator {
 
 	// Move Updates Doc to ManualReview
 	public void moveUpdatesToManualReview(Document doc) throws Exception {
-		String expression = "//" + CDTConstants.UPDATE;
+		String expression = CDTConstants.forwardSlash + CDTConstants.UPDATE;
 		NodeList nodeList = null;
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 		System.out.println("Update nodeList Length : " + nodeList.getLength());
-		String primaryKeyName = tablePrefix + "Key";
+		String primaryKeyName = tablePrefix + CDTConstants.key;
 
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
@@ -584,7 +584,7 @@ public class CDTXmlComparator {
 		// Writing the File into Output Directory manual Folder
 		try {
 			if (processedManualReviewDoc.getDocumentElement().getChildNodes().getLength() > 0) {
-				String fileName = parentNodeName + ".xml";
+				String fileName = parentNodeName + CDTConstants.xmlExtension;
 				String fullPath = outDir + File.separator + CDTConstants.manual;
 				fileWriter.writeFile(fullPath, processedManualReviewDoc, fileName);
 			}
@@ -613,15 +613,15 @@ public class CDTXmlComparator {
 	}
 
 	public void debug(Document doc, String s) throws Exception {
-		String expression = "//" + CDTConstants.INSERT;
+		String expression = CDTConstants.forwardSlash + CDTConstants.INSERT;
 		NodeList nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 		System.out.println(s + "  Insert nodeList Length() " + nodeList.getLength());
 
-		expression = "//" + CDTConstants.DELETE;
+		expression = CDTConstants.forwardSlash + CDTConstants.DELETE;
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 		System.out.println(s + "  Delete nodeList Length() " + nodeList.getLength());
 
-		expression = "//" + CDTConstants.UPDATE;
+		expression = CDTConstants.forwardSlash + CDTConstants.UPDATE;
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 		System.out.println(s + "  Update nodeList Length() " + nodeList.getLength());
 	}
