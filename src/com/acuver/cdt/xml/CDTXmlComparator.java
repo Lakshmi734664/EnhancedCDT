@@ -351,17 +351,22 @@ public class CDTXmlComparator {
 	}
 
 	// remove delete tag from document
-	public Document removeDeleteTags(Document doc) throws Exception {
+	public Document removeDeleteTags(Document doc) {
+		try {
 		debug(doc, "Before removeDeleteTags");
 		NodeList deleteNodesList = doc.getElementsByTagName(CDTConstants.DELETE);
 		Element rootEle = doc.getDocumentElement();
 		int length = deleteNodesList.getLength();
-		for (int i = 0; i < length; i++) {
+		for (int i = length-1; i >=0; i--) {
 			Node node = deleteNodesList.item(i);
 			rootEle.removeChild(node);
 		}
 		debug(doc, "Before removeDeleteTags");
 		return doc;
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	public void debug(Document doc, String s) throws Exception {
