@@ -204,6 +204,7 @@ public class CDTFileWriter {
 						Path sourceFilePath = Paths.get(sourceFile.getPath());
 						Path destFilePath = Paths.get(destFile.getPath());
 						appendXmlFile(sourceFilePath.toFile(), destFilePath.toFile());
+						sourceFile.delete();
 					} catch (Exception e) {
 
 						e.printStackTrace();
