@@ -1,21 +1,22 @@
 package com.acuver.cdt;
 
-import com.acuver.cdt.file.CDTFileReader;
-import com.acuver.cdt.file.CDTFileWriter;
-import com.acuver.cdt.util.CDTHelper;
-import com.acuver.cdt.util.CDTConstants;
-import com.acuver.cdt.xml.CDTXmlComparator;
-import org.w3c.dom.Document;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
+
+import org.w3c.dom.Document;
+
+import com.acuver.cdt.file.CDTFileReader;
+import com.acuver.cdt.file.CDTFileWriter;
+import com.acuver.cdt.util.CDTHelper;
+import com.acuver.cdt.xml.CDTXmlComparator;
 
 public class EnhancedCDTMain {
 
@@ -33,8 +34,8 @@ public class EnhancedCDTMain {
 	public static ArrayList<String> ydkPerf1IgnoreTables = null;
 	public static ArrayList<String> ydkPerf2IgnoreTables = null;
 	// merged reports directories
-	
-	public static String CDT_REPORT_OUT_DIR1 = null; 
+
+	public static String CDT_REPORT_OUT_DIR1 = null;
 	public static String CDT_REPORT_OUT_DIR2 = null;
 	public static Map<String, String> recordIdentifierMap;
 
@@ -45,24 +46,23 @@ public class EnhancedCDTMain {
 			CDTFileWriter fileWriter = new CDTFileWriter();
 
 			String mode = argMode.length > 0 ? argMode[0] : "--merge";
-			//String mode = argMode.length > 0 ? argMode[0] : "--mergeManualReview";
+			// String mode = argMode.length > 0 ? argMode[0] : "--mergeManualReview";
 
 			switch (mode) {
 			case "--help":
 				CDTHelper.showPropertiesFileHelpMsg();
 				break;
 			case "--merge":
-				 fileReader.readPropertiesFile();
-				 fileReader.populateRecordIdentifier();
+				fileReader.readPropertiesFile();
+				fileReader.populateRecordIdentifier();
 				mergeCDTReports(fileReader, fileWriter);
-			//	fileWriter.readDataFromExcelSheet();
+				// fileWriter.readDataFromExcelSheet();
 				break;
 			case "--mergeManualReview":
 				fileReader.readPropertiesFile();
-				System.out.println("CDT_REPORT_OUT_DIR1 : "+CDT_REPORT_OUT_DIR1);
-				
+
 				fileWriter.mergeAfterReview(CDT_REPORT_OUT_DIR1);
-				//fileWriter.mergeAfterReview(CDT_REPORT_OUT_DIR2);
+				// fileWriter.mergeAfterReview(CDT_REPORT_OUT_DIR2);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -71,15 +71,13 @@ public class EnhancedCDTMain {
 
 	private static void mergeCDTReports(CDTFileReader fileReader, CDTFileWriter fileWriter) throws Exception {
 		try {
-			
+
 			if (YDKPREF1 != null && !YDKPREF1.trim().isEmpty()) {
 				ydkPerf1IgnoreTables = fileReader.readYDKPrefs(YDKPREF1);
 			}
 
 			File[] filesList = fileReader.readFilesFromDir(CDT_REPORT_DIR1);
-			if (filesList == null) {
-				System.out.println("No files found in directory: " + CDT_REPORT_DIR1);
-			}
+
 			if (filesList != null && filesList.length > 0) {
 				CDT_REPORT_OUT_DIR1 = fileWriter.createOutDir(OUTPUT_DIR);
 
@@ -97,41 +95,37 @@ public class EnhancedCDTMain {
 	private static void processFile(File f, String outDir, CDTFileReader fileReader, CDTFileWriter fileWriter)
 			throws Exception {
 		DocumentBuilder documentBuilder = factory.newDocumentBuilder();
-		
-		if(f.isFile()) {
-		  
-		if (f != null && f.length() > 0) {
-			System.out.println("The files in the CDT_REPORT_DIR1 are " + f.getName());
-			String fileName = f.getName();
 
-			try {
-				if (ydkPerf1IgnoreTables == null || !(ydkPerf1IgnoreTables.contains(fileName))) {
-					System.out.println(
-							"YDKPREF1 Table Names List is Empty or YDKPREF1 Table Names List does not contains the File Name : "
-									+ fileName);
-					if (fileName.startsWith("YFS") || fileName.startsWith("PLT")) {
-						CDTXmlComparator xmlComparator = new CDTXmlComparator();
-						xmlComparator.setInputDoc(documentBuilder.parse(f));
-						xmlComparator.setOutDir(outDir);
-						xmlComparator.setFileReader(fileReader);
-						xmlComparator.setFileWriter(fileWriter);
-						Document outputDoc = xmlComparator.merge();
-						fileWriter.writeFile(outDir, outputDoc, fileName);
-					} else {
-						try {
-							fileWriter.copyFileToDirectory(f, outDir);
-						} catch (IOException e) {
-							System.out.println("An error occurred while copying the file.");
-							e.printStackTrace();
+		if (f.isFile()) {
+
+			if (f != null && f.length() > 0) {
+				String fileName = f.getName();
+
+				try {
+					if (ydkPerf1IgnoreTables == null || !(ydkPerf1IgnoreTables.contains(fileName))) {
+
+						if (fileName.startsWith("YFS") || fileName.startsWith("PLT")) {
+							CDTXmlComparator xmlComparator = new CDTXmlComparator();
+							xmlComparator.setInputDoc(documentBuilder.parse(f));
+							xmlComparator.setOutDir(outDir);
+							xmlComparator.setFileReader(fileReader);
+							xmlComparator.setFileWriter(fileWriter);
+							Document outputDoc = xmlComparator.merge();
+							fileWriter.writeFile(outDir, outputDoc, fileName);
+						} else {
+							try {
+								fileWriter.copyFileToDirectory(f, outDir);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
 						}
 					}
-				}
 
-			} catch (Exception e) {
-				e.printStackTrace();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
+
 		}
-		
-	}
 	}
 }

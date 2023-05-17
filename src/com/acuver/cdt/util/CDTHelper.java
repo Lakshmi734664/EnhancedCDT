@@ -1,18 +1,20 @@
 package com.acuver.cdt.util;
 
-import com.acuver.cdt.EnhancedCDTMain;
+import java.io.StringReader;
+import java.io.StringWriter;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.StringReader;
-import java.io.StringWriter;
+import com.acuver.cdt.EnhancedCDTMain;
 
 public class CDTHelper {
 
@@ -29,31 +31,29 @@ public class CDTHelper {
 		printMsg(message);
 	}
 
-    // Get Table Primary Key Name
-    public static String getTablePrefix(String tableName) {
-        int beginIndex = tableName.indexOf(CDTConstants.hyphen);
-        String name = tableName.substring(beginIndex).toLowerCase();
-        name = name.replace(CDTConstants.hyphen, " ");
-        System.out.println("name: " + name);
-        char[] charArray = name.toCharArray();
-        boolean foundSpace = true;
-        for (int i = 0; i < charArray.length; i++) {
-            if (Character.isLetter(charArray[i])) {
-                if (foundSpace) {
-                    charArray[i] = Character.toUpperCase(charArray[i]);
-                    foundSpace = false;
-                }
-            } else {
-                foundSpace = true;
-            }
-        }
-        String tablePrefix = String.valueOf(charArray);
-        tablePrefix = tablePrefix.replaceAll(CDTConstants.spaces, "");
-        return tablePrefix;
-    }
+	// Get Table Primary Key Name
+	public static String getTablePrefix(String tableName) {
+		int beginIndex = tableName.indexOf(CDTConstants.hyphen);
+		String name = tableName.substring(beginIndex).toLowerCase();
+		name = name.replace(CDTConstants.hyphen, " ");
+		char[] charArray = name.toCharArray();
+		boolean foundSpace = true;
+		for (int i = 0; i < charArray.length; i++) {
+			if (Character.isLetter(charArray[i])) {
+				if (foundSpace) {
+					charArray[i] = Character.toUpperCase(charArray[i]);
+					foundSpace = false;
+				}
+			} else {
+				foundSpace = true;
+			}
+		}
+		String tablePrefix = String.valueOf(charArray);
+		tablePrefix = tablePrefix.replaceAll(CDTConstants.spaces, "");
+		return tablePrefix;
+	}
 
-
-    public static Element createChildElement(Element element, String childName) {
+	public static Element createChildElement(Element element, String childName) {
 		Document doc = element.getOwnerDocument();
 		Element childElement = doc.createElement(childName);
 		element.appendChild(childElement);

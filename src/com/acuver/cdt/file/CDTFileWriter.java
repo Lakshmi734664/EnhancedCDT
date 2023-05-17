@@ -36,8 +36,6 @@ public class CDTFileWriter {
 	public void appendXmlFile(File sourceFile, File destFile) {
 		try {
 
-			// Create a new DocumentBuilderFactory
-
 			// Use the factory to create a new DocumentBuilder
 			DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();
 
@@ -63,7 +61,6 @@ public class CDTFileWriter {
 			StreamResult result = new StreamResult(destFile);
 			transformer.transform(source, result);
 
-			System.out.println("XML file appended successfully.");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -141,17 +138,15 @@ public class CDTFileWriter {
 				if (!file.exists()) {
 					file.createNewFile();
 				}
-
 				// Create a new FileWriter object to write to the file
 				writer = new FileWriter(file);
 
 				// Write the file data to the file
 				writer.write(fileData);
 
-				System.out.println("File created successfully!");
 			}
 		} catch (Exception e) {
-			System.out.println("Caught an exception: " + e.getMessage());
+			e.printStackTrace();
 		} finally {
 			// Close the writer
 			writer.close();
@@ -162,18 +157,9 @@ public class CDTFileWriter {
 
 		try {
 			File directory = new File(path);
-
-			// Create the directory if it doesn't exist
-			if (!directory.exists()) {
-				boolean success = directory.mkdirs();
-				if (success) {
-					System.out.println("Directory created successfully: " + path);
-				} else {
-					System.out.println("Failed to create directory: " + path);
-				}
-			}
+			directory.mkdirs();
 		} catch (Exception e) {
-			System.out.println("Caught an exception: " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -217,12 +203,9 @@ public class CDTFileWriter {
 					try {
 						Path sourceFilePath = Paths.get(sourceFile.getPath());
 						Path destFilePath = Paths.get(destFile.getPath());
-
 						appendXmlFile(sourceFilePath.toFile(), destFilePath.toFile());
-
-						System.out.println("Copied " + sourceFile.getPath() + " to " + destFile.getPath());
 					} catch (Exception e) {
-						System.err.println("Error copying file: " + e.getMessage());
+
 						e.printStackTrace();
 					}
 				}
@@ -273,10 +256,9 @@ public class CDTFileWriter {
 					}
 
 					if (c == 0) {
-						System.out.print(cell.getStringCellValue() + "=");
 						writer.write(cell.getStringCellValue() + "=");
 					} else if (c == 2) {
-						System.out.print(cell.getStringCellValue() + "|");
+
 						writer.write(cell.getStringCellValue() + "|");
 					} else {
 						String input = cell.getStringCellValue();
@@ -295,14 +277,14 @@ public class CDTFileWriter {
 
 						// Convert the StringBuilder back to a string
 						String output = builder.toString();
-						System.out.print(output);
+
 						writer.write(output);
 					}
 
 				}
 				// move to the next line in the output file
 				writer.write("\n");
-				System.out.println();
+
 			}
 			// close input stream and writer
 			inputStream.close();
