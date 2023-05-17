@@ -1,5 +1,14 @@
 package com.acuver.cdt.file;
 
+import com.acuver.cdt.EnhancedCDTMain;
+import com.acuver.cdt.util.CDTConstants;
+import com.acuver.cdt.util.CDTHelper;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.xpath.XPathConstants;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -9,19 +18,7 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.xpath.XPathConstants;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import com.acuver.cdt.EnhancedCDTMain;
-import com.acuver.cdt.util.CDTConstants;
-import com.acuver.cdt.util.CDTHelper;
-
 public class CDTFileReader {
-
 	public void readPropertiesFile() throws Exception {
 
 		File enhancedcdtfile = new File(CDTConstants.currentDirectory + File.separator + "enhancedcdt.properties");
@@ -50,6 +47,7 @@ public class CDTFileReader {
 			fis.close();
 		}
 
+
 		EnhancedCDTMain.CDT_REPORT_DIR1 = prop.getProperty(CDTConstants.CDT_REPORT_DIR1);
 		EnhancedCDTMain.CDT_REPORT_DIR2 = prop.getProperty(CDTConstants.CDT_REPORT_DIR2);
 		EnhancedCDTMain.CDT_XMLS1 = prop.getProperty(CDTConstants.CDT_XMLS1);
@@ -63,11 +61,11 @@ public class CDTFileReader {
 		if (EnhancedCDTMain.CDT_REPORT_DIR1 != null && EnhancedCDTMain.CDT_REPORT_DIR1.trim().isEmpty()
 				|| EnhancedCDTMain.CDT_REPORT_DIR2 != null && EnhancedCDTMain.CDT_REPORT_DIR2.trim().isEmpty()
 				|| EnhancedCDTMain.CDT_XMLS1 != null && EnhancedCDTMain.CDT_XMLS1.trim().isEmpty()
-				|| EnhancedCDTMain.CDT_XMLS2 != null && EnhancedCDTMain.CDT_XMLS2.trim().isEmpty()
-				|| EnhancedCDTMain.OUTPUT_DIR != null && EnhancedCDTMain.OUTPUT_DIR.trim().isEmpty()) {
+				|| EnhancedCDTMain.CDT_XMLS2 != null && EnhancedCDTMain.CDT_XMLS2.trim().isEmpty()) {
 			CDTHelper.showPropertiesFileHelpMsg();
 			System.exit(1);
 		}
+
 	}
 
 	public void populateRecordIdentifier() {
@@ -87,28 +85,25 @@ public class CDTFileReader {
 
 		ArrayList<String> tableNamesList = new ArrayList<String>();
 		File file = new File(ydkperfs);
-
-		if (file != null && file.length() > 0) {
-			DocumentBuilder db = null;
-			db = EnhancedCDTMain.factory.newDocumentBuilder();
-			Document doc = null;
-			doc = db.parse(file);
+				if (file != null && file.length() > 0) {
+					DocumentBuilder db = null;
+					db = EnhancedCDTMain.factory.newDocumentBuilder();
+					Document doc = null;
+					doc = db.parse(file);
 			String expression = CDTConstants.forwardSlash + CDTConstants.ignore + CDTConstants.forwardSlash
 					+ CDTConstants.table;
-			NodeList nodeList = null;
-			nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-
-			for (int itr = 0; itr < nodeList.getLength(); itr++) {
-				Element tableElement = (Element) nodeList.item(itr);
-				String tableName = tableElement.getAttribute("Name");
-				if (tableName != null && !tableName.isEmpty()) {
+					NodeList nodeList = null;
+					nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+							XPathConstants.NODESET);
+					for (int itr = 0; itr < nodeList.getLength(); itr++) {
+						Element tableElement = (Element) nodeList.item(itr);
+						String tableName = tableElement.getAttribute("Name");
+						if (tableName != null && !tableName.isEmpty()) {
 					tableName = tableName + CDTConstants.xmlExtension;
-					tableNamesList.add(tableName);
-				}
+							tableNamesList.add(tableName);
+						}
+					}
 			}
-
-		}
-
 		return tableNamesList;
 	}
 
@@ -121,13 +116,13 @@ public class CDTFileReader {
 	}
 
 	// Read File From Directory
-	public Document readFileFromDir(String directory, String fileName) throws Exception {
-		// Creating a File object for directory
-		File file = new File(directory + File.separator + fileName);
-		if (file != null) {
-			DocumentBuilder documentBuilder = EnhancedCDTMain.factory.newDocumentBuilder();
-			return documentBuilder.parse(file);
-		}
-		return null;
-	}
+    public Document readFileFromDir(String directory, String fileName) throws Exception {
+        // Creating a File object for directory
+        File file = new File(directory + File.separator + fileName );
+		if (file != null && file.length() > 0) {
+            DocumentBuilder documentBuilder = EnhancedCDTMain.factory.newDocumentBuilder();
+            return documentBuilder.parse(file);
+        }
+        return null;
+    }
 }

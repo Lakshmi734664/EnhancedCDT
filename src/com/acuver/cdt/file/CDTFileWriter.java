@@ -1,7 +1,20 @@
 package com.acuver.cdt.file;
 
+import com.acuver.cdt.EnhancedCDTMain;
+import com.acuver.cdt.util.CDTConstants;
+import com.acuver.cdt.util.CDTHelper;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -11,30 +24,13 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import com.acuver.cdt.EnhancedCDTMain;
-import com.acuver.cdt.util.CDTConstants;
-import com.acuver.cdt.util.CDTHelper;
-
 public class CDTFileWriter {
+
+	
 
 	public void appendXmlFile(File sourceFile, File destFile) {
 		try {
+
 
 			// Use the factory to create a new DocumentBuilder
 			DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();
@@ -68,20 +64,20 @@ public class CDTFileWriter {
 
 	public String createOutDir(String location) throws IOException {
 
-		String fullPath = "";
+	    String fullPath = "";
 		String timeStamp = new SimpleDateFormat(CDTConstants.dateFormat).format(new Date());
 
 		if (location == null) {
 
 			fullPath = CDTConstants.currentDirectory + File.separator + timeStamp;
 
-			createDirectory(fullPath + File.separator + CDTConstants.manual);
+			createDirectory(fullPath + File.separator+CDTConstants.manual);
 			createDirectory(fullPath + File.separator + CDTConstants.enhancedCompare);
 		} else {
 
 			fullPath = location + File.separator + timeStamp;
 
-			createDirectory(fullPath + File.separator + CDTConstants.manual);
+			createDirectory(fullPath + File.separator+CDTConstants.manual);
 			createDirectory(fullPath + File.separator + CDTConstants.enhancedCompare);
 		}
 
@@ -98,26 +94,27 @@ public class CDTFileWriter {
 			e.printStackTrace();
 		}
 	}
-
+ 
 	public Document prettyPrintXml(Document document) {
-		try {
-
+        try {
+        	
 			EnhancedCDTMain.tf.setAttribute("indent-number", 4); // Adjust the indentation level as needed
-			Transformer transformer = EnhancedCDTMain.tf.newTransformer();
+            Transformer transformer = EnhancedCDTMain.tf.newTransformer();
 			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
 			DOMSource source = new DOMSource(document);
 			StringWriter writer = new StringWriter();
 			StreamResult result = new StreamResult(writer);
-
+          
 			transformer.transform(source, result);
 			return CDTHelper.convertStringToDocument(writer.toString().replaceAll("\\n\\s*\\n", "\n"));
 		} catch (TransformerException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
 	public void createXMLFile(String fileLocation, String fileName, String fileData)
 			throws IllegalArgumentException, IOException {
@@ -138,6 +135,7 @@ public class CDTFileWriter {
 				if (!file.exists()) {
 					file.createNewFile();
 				}
+                
 				// Create a new FileWriter object to write to the file
 				writer = new FileWriter(file);
 
@@ -157,6 +155,7 @@ public class CDTFileWriter {
 
 		try {
 			File directory = new File(path);
+
 			directory.mkdirs();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -182,7 +181,7 @@ public class CDTFileWriter {
 
 	public void mergeAfterReview(String parentFolderName) {
 
-		String manualFolderName = parentFolderName + File.separator + CDTConstants.manual;
+		String manualFolderName = parentFolderName  +File.separator+CDTConstants.manual;
 		File manualFolder = new File(manualFolderName);
 		File parentFolder = new File(parentFolderName);
 
@@ -203,10 +202,11 @@ public class CDTFileWriter {
 					try {
 						Path sourceFilePath = Paths.get(sourceFile.getPath());
 						Path destFilePath = Paths.get(destFile.getPath());
+
 						appendXmlFile(sourceFilePath.toFile(), destFilePath.toFile());
+
 						sourceFile.delete();
 					} catch (Exception e) {
-
 						e.printStackTrace();
 					}
 				}
@@ -214,6 +214,7 @@ public class CDTFileWriter {
 		}
 	}
 
+	/*
 	public void readDataFromExcelSheet() {
 		// specify input and output file paths
 		String excelFilePath = "D:\\Table.xlsx";
@@ -257,10 +258,11 @@ public class CDTFileWriter {
 					}
 
 					if (c == 0) {
+						System.out.print(cell.getStringCellValue() + "=");
 						writer.write(cell.getStringCellValue() + "=");
-					} else if (c == 2) {
-
-						writer.write(cell.getStringCellValue() + "|");
+					} else if (c==2) {
+						System.out.print(cell.getStringCellValue()+"|");
+						writer.write(cell.getStringCellValue()+"|");
 					} else {
 						String input = cell.getStringCellValue();
 
@@ -278,14 +280,14 @@ public class CDTFileWriter {
 
 						// Convert the StringBuilder back to a string
 						String output = builder.toString();
-
+						System.out.print(output);
 						writer.write(output);
 					}
 
 				}
 				// move to the next line in the output file
 				writer.write("\n");
-
+				System.out.println();
 			}
 			// close input stream and writer
 			inputStream.close();
@@ -295,5 +297,5 @@ public class CDTFileWriter {
 			e.printStackTrace();
 		}
 	}
-
+*/
 }
