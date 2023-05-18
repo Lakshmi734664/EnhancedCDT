@@ -242,7 +242,7 @@ public class CDTXmlComparator {
 
 		if (enhancedCompareGenerator.getProcessedUpdateEnhancedCompareDoc().getDocumentElement().getChildNodes()
 				.getLength() > 0) {
-			String fileName = tableName + ".xml";
+			String fileName = tableName + CDTConstants.xmlExtension;
 			String fullPath = outDir + File.separator + CDTConstants.enhancedCompare;
 			fileWriter.writeFile(fullPath, enhancedCompareGenerator.getProcessedUpdateEnhancedCompareDoc(), fileName);
 		}
@@ -250,6 +250,7 @@ public class CDTXmlComparator {
 
 	// Move Updates Doc to ManualReview
 	public void moveUpdatesToManualReview(Document doc) throws Exception {
+
 		String expression = CDTConstants.forwardSlash + CDTConstants.UPDATE;
 		NodeList nodeList = null;
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
@@ -261,8 +262,7 @@ public class CDTXmlComparator {
 		// DOM Parser
 		DocumentBuilder parser = EnhancedCDTMain.factory.newDocumentBuilder();
 		Document processedManualReviewDoc = parser.newDocument();
-		String parentNodeName = doc.getDocumentElement().getNodeName();
-		Element parentElementEnhancedCompare = processedManualReviewDoc.createElement(parentNodeName);
+		Element parentElementEnhancedCompare = processedManualReviewDoc.createElement(tableName);
 		processedManualReviewDoc.appendChild(parentElementEnhancedCompare);
 
 		for (int itr = 0; itr < nodeList.getLength(); itr++) {
@@ -275,7 +275,14 @@ public class CDTXmlComparator {
 			String Xmls2Modifyts = null;
 
 			// Getting file from Directory CDT_XMLS1
-			Document cdtxmls1doc = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS1, parentNodeName + ".cdt.xml");
+			Document cdtxmls1doc = null;
+
+			if (isXML1) {
+				cdtxmls1doc = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS1, tableName + ".cdt.xml");
+			} else {
+				cdtxmls1doc = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS2, tableName + ".cdt.xml");
+			}
+
 			if (cdtxmls1doc != null) {
 				NodeList Xmls1NodeList = cdtxmls1doc.getDocumentElement().getChildNodes();
 
@@ -285,7 +292,9 @@ public class CDTXmlComparator {
 						Element Xmls1Element = (Element) xmls1Node;
 						String Xmls1PrimaryKeyValue = Xmls1Element.getAttribute(primaryKeyName);
 						if (Xmls1PrimaryKeyValue.equalsIgnoreCase(primaryKeyValue)) {
+
 							Xmls1Modifyts = Xmls1Element.getAttribute("Modifyts");
+
 							break;
 						}
 					}
@@ -293,13 +302,22 @@ public class CDTXmlComparator {
 			}
 
 			// Getting file from Directory CDT_XMLS2
-			Document cdtxmls2doc = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS2, parentNodeName + ".cdt.xml");
+			Document cdtxmls2doc = null;
+
+			if (isXML1) {
+				cdtxmls2doc = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS2, tableName + ".cdt.xml");
+			} else {
+				cdtxmls2doc = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS1, tableName + ".cdt.xml");
+			}
+
 			if (cdtxmls2doc != null) {
 				recordIdentifer.setDoc(cdtxmls2doc);
 				recordIdentifer.setElemToMatch(updateElement);
 				Element Xmls2ElementMatch = recordIdentifer.getMatchingUniqueElement(false);
 				if (Xmls2ElementMatch != null) {
+
 					Xmls2Modifyts = Xmls2ElementMatch.getAttribute("Modifyts");
+
 				}
 			}
 
@@ -322,7 +340,7 @@ public class CDTXmlComparator {
 			}
 
 			if (Xmls1Modifytsdate != null && Xmls2Modifytsdate != null) {
-				if (Xmls1Modifytsdate.before(Xmls2Modifytsdate)) {
+				if (Xmls2Modifytsdate.before(Xmls1Modifytsdate)) {
 
 					Node importedUpdateNode = processedManualReviewDoc.importNode(updateNode, true);
 					processedManualReviewDoc.getDocumentElement().appendChild(importedUpdateNode);
@@ -336,7 +354,7 @@ public class CDTXmlComparator {
 		// Writing the File into Output Directory manual Folder
 		try {
 			if (processedManualReviewDoc.getDocumentElement().getChildNodes().getLength() > 0) {
-				String fileName = parentNodeName + CDTConstants.xmlExtension;
+				String fileName = tableName + CDTConstants.xmlExtension;
 				String fullPath = outDir + File.separator + CDTConstants.manual;
 				fileWriter.writeFile(fullPath, processedManualReviewDoc, fileName);
 			}
@@ -353,17 +371,17 @@ public class CDTXmlComparator {
 	// remove delete tag from document
 	public Document removeDeleteTags(Document doc) {
 		try {
-		debug(doc, "Before removeDeleteTags");
-		NodeList deleteNodesList = doc.getElementsByTagName(CDTConstants.DELETE);
-		Element rootEle = doc.getDocumentElement();
-		int length = deleteNodesList.getLength();
-		for (int i = length-1; i >=0; i--) {
-			Node node = deleteNodesList.item(i);
-			rootEle.removeChild(node);
-		}
-		debug(doc, "Before removeDeleteTags");
-		return doc;
-		}catch(Exception e) {
+			debug(doc, "Before removeDeleteTags");
+			NodeList deleteNodesList = doc.getElementsByTagName(CDTConstants.DELETE);
+			Element rootEle = doc.getDocumentElement();
+			int length = deleteNodesList.getLength();
+			for (int i = length - 1; i >= 0; i--) {
+				Node node = deleteNodesList.item(i);
+				rootEle.removeChild(node);
+			}
+			debug(doc, "Before removeDeleteTags");
+			return doc;
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
