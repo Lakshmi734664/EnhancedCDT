@@ -12,7 +12,6 @@ public class EnhancedCompareGenerator {
 	Document processedUpdateEnhancedCompareDoc;
 
 	public void createEnhancedCompare(String updateAttrName, Element updateElement) throws Exception {
-		System.out.println("Entering createEnhancedCompare : ");
 
 		Element oldValuesElement = (Element) updateElement.getElementsByTagName("OldValues").item(0);
 
@@ -70,17 +69,15 @@ public class EnhancedCompareGenerator {
 			importedUpdateNode.appendChild(enhancedCompareEle);
 		}
 
-		System.out.println("Exiting createEnhancedCompare : ");
 	}
 
 	private void diffNode(Element oldAttrValueEle, Element newAttrValueEle) throws Exception {
-		System.out.println("Entering diffNode : ");
 
 		// Remove White Space Nodes
 		removeWhiteSpaceNodes(oldAttrValueEle);
 
 		NodeList oldAttrNodeList = oldAttrValueEle.getChildNodes();
-		System.out.println("oldAttrNodeList Length :  " + oldAttrNodeList.getLength());
+
 		List<Node> oldChildEmptyNodesRmvList = new ArrayList<Node>();
 
 		for (int i = 0; i < oldAttrNodeList.getLength(); i++) {
@@ -91,14 +88,11 @@ public class EnhancedCompareGenerator {
 			NodeList matchingNodeList = diffAttributes(oldAttrValueSubEle, newAttrValueEle);
 
 			if (matchingNodeList != null && matchingNodeList.getLength() > 0) {
-				System.out.println("macthingNodeList Length : " + matchingNodeList.getLength());
 
 				for (int j = 0; j < matchingNodeList.getLength(); j++) {
 					Node matchingAttr = matchingNodeList.item(j);
 
-					System.out.println("matchingAttr Node Name " + matchingAttr.getNodeName());
 					Element matchingSubEle = (Element) matchingAttr;
-					System.out.println("before calling removeAttrIfEqual ");
 
 					// if matching node found , remove equal attributes
 					oldChildEmptyNodesRmvList = removeAttrIfEqual(oldAttrValueSubEle, matchingSubEle,
@@ -106,7 +100,7 @@ public class EnhancedCompareGenerator {
 
 					// Get list of all child nodes for oldAttr and iterate through it.
 					NodeList subChildElementNodeList = oldAttr.getChildNodes();
-					System.out.println("subChildElementNodeList Length: " + subChildElementNodeList.getLength());
+
 					for (int m = 0; m < subChildElementNodeList.getLength(); m++) {
 						Node subChildNode = subChildElementNodeList.item(m);
 						if (subChildNode.getNodeType() == Node.ELEMENT_NODE) {
@@ -129,12 +123,10 @@ public class EnhancedCompareGenerator {
 			}
 		}
 
-		System.out.println("Exiting diffNode : ");
 	}
 
 	private List<Node> removeAttrIfEqual(Element oldAttrValueEle, Element newAttrValueEle,
 			List<Node> oldChildEmptyNodesRmvList) {
-		System.out.println("Entering removeAttrIfEqual :");
 
 		NamedNodeMap oldAttributes = oldAttrValueEle.getAttributes();
 		NamedNodeMap newAttributes = newAttrValueEle.getAttributes();
@@ -154,11 +146,6 @@ public class EnhancedCompareGenerator {
 				String newAttrValue = newAttr.getValue().trim();
 				String newAttrName = newAttr.getNodeName();
 
-				System.out.println("removeAttrIfEqual --> oldAttr Name: " + oldAttrName);
-				System.out.println("removeAttrIfEqual --> newAttr Name: " + newAttrName);
-				System.out.println("removeAttrIfEqual --> oldAttrValue: " + oldAttrValue);
-				System.out.println("removeAttrIfEqual --> newAttrValue: " + newAttrValue);
-
 				// Compare attribute values
 				if (oldAttrValue.equalsIgnoreCase(newAttrValue)) {
 
@@ -171,11 +158,11 @@ public class EnhancedCompareGenerator {
 				}
 				if (oldAttrValue.matches("\\d+") && oldAttrValue.length() > 5) {
 					// Add the Attribute which needs to be removed in oldChildAttrRmvList
-					System.out.println("Inside oldAttrValue containing numbers and length > 5 " + oldAttrValue);
+
 					oldChildAttrRmvList.add(oldAttr);
 				}
 				if (newAttrValue.matches("\\d+") && newAttrValue.length() > 5) {
-					System.out.println("Inside newAttrValue containing numbers and length > 5 " + newAttrValue);
+
 					if (newAttrValueEle.hasAttribute(newAttr.getName())) {
 						newAttrValueEle.removeAttributeNode(newAttr);
 					}
@@ -253,7 +240,6 @@ public class EnhancedCompareGenerator {
 		 */
 
 		NodeList actualElementNodes = actualElement.getElementsByTagName(expectedElement.getNodeName());
-		System.out.println("actualElementNodes Length: " + actualElementNodes.getLength());
 
 		boolean sameCount = false;
 		int minDiffCount = Integer.MAX_VALUE;
@@ -266,7 +252,6 @@ public class EnhancedCompareGenerator {
 
 			Element actualEle = (Element) actualElementNode;
 			int count = getAttributeDiffCount(expectedElement, actualEle);
-			System.out.println("count: " + count);
 
 			// Update the matching element if it has the least count
 			if (count < minDiffCount) {
@@ -278,14 +263,12 @@ public class EnhancedCompareGenerator {
 		}
 
 		if (sameCount) {
-			System.out.println("Inside sameCount : ");
+
 			return matchingNodeList;
 		} else {
-			System.out.println("Add the matching element to the matchingNodeList : ");
 
 			// Add the matching element to the matchingNodeList
 			if (matchingElement != null) {
-				System.out.println("matchingElement Node Name : " + matchingElement.getNodeName());
 
 				Document document = expectedElement.getOwnerDocument();
 				// Create a new NodeList and add the matching element to it
@@ -349,12 +332,11 @@ public class EnhancedCompareGenerator {
 			Attr actualAttr = (Attr) actualAttrs.getNamedItem(expectedAttr.getName());
 
 			if (actualAttr == null) {
-				System.out.println(expectedAttr.getName() + ": No attribute found:" + expectedAttr);
+
 				diffs.add(expectedAttr.getName() + ": No attribute found:" + expectedAttr);
 			}
 			if (!expectedAttr.getValue().equals(actualAttr.getValue())) {
-				System.out.println(expectedAttr.getName() + ": Attribute values do not match: "
-						+ expectedAttr.getValue() + " " + actualAttr.getValue());
+
 				diffs.add(expectedAttr.getName() + ": Attribute values do not match: " + expectedAttr.getValue() + " "
 						+ actualAttr.getValue());
 			}
