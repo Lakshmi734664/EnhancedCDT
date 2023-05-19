@@ -1,29 +1,36 @@
 package com.acuver.cdt.file;
 
-import com.acuver.cdt.EnhancedCDTMain;
-import com.acuver.cdt.util.CDTConstants;
-import com.acuver.cdt.util.CDTHelper;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import com.acuver.cdt.EnhancedCDTMain;
+import com.acuver.cdt.util.CDTConstants;
+import com.acuver.cdt.util.CDTHelper;
 
 public class CDTFileWriter {
 
@@ -91,26 +98,27 @@ public class CDTFileWriter {
 
 	}
 
-	public Document prettyPrintXml(Document document) {
+	public Document prettyPrintXml(Document document) throws SAXException, IOException, ParserConfigurationException {
 		try {
-
-			EnhancedCDTMain.tf.setAttribute("indent-number", 4); // Adjust the indentation level as needed
 			Transformer transformer = EnhancedCDTMain.tf.newTransformer();
-			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
 			DOMSource source = new DOMSource(document);
 			StringWriter writer = new StringWriter();
 			StreamResult result = new StreamResult(writer);
 
 			transformer.transform(source, result);
-			return CDTHelper.convertStringToDocument(writer.toString().replaceAll("\\n\\s*\\n", "\n"));
+
+			String xmlString = writer.toString().replaceAll("\\n\\s*\\n", "\n");
+
+			DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();	
+			InputSource inputSource = new InputSource(new StringReader(xmlString));
+			return builder.parse(inputSource);
+			
 		} catch (TransformerException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
-
 	public void createXMLFile(String fileLocation, String fileName, String fileData) throws IOException {
 		if (fileData == "") {
 			throw new IllegalArgumentException("No file data given\r\n" + "Please give the file data.");
@@ -235,7 +243,8 @@ public class CDTFileWriter {
 	 * writer.write(cell.getStringCellValue()+"|"); } else { String input =
 	 * cell.getStringCellValue();
 	 * 
-	 * // Create a StringBuilder to build the modified string StringBuilder builder
+	 * // Create a StringBuilder to build the modified string
+	 * StringBuilder builder
 	 * = new StringBuilder(input);
 	 * 
 	 * // Iterate through each character in the StringBuilder for (int i = 0; i <
