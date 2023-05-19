@@ -1,18 +1,16 @@
 package com.acuver.cdt.util;
 
-import java.io.StringWriter;
-
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.acuver.cdt.EnhancedCDTMain;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
 
 public class CDTHelper {
 
@@ -87,10 +85,16 @@ public class CDTHelper {
 			Transformer transformer = EnhancedCDTMain.tf.newTransformer();
 			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
 			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
+			
 			StringWriter stringWriter = new StringWriter();
 			transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
-			return stringWriter.toString();
+			
+            // Removed standalone="no" attribute from XML Declaration
+            String xmlString = stringWriter.toString();
+            xmlString = xmlString.replace(" standalone=\"no\"", "");
+            
+            return xmlString;           	
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
