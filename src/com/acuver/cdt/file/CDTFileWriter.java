@@ -97,28 +97,34 @@ public class CDTFileWriter {
 		createXMLFile(fullPath, fileName, fileData);
 
 	}
-
+	
 	public Document prettyPrintXml(Document document) throws SAXException, IOException, ParserConfigurationException {
-		try {
-			Transformer transformer = EnhancedCDTMain.tf.newTransformer();
+	    try {
+	        EnhancedCDTMain.tf.setAttribute("indent-number", 4); // Adjust the indentation level as needed
+	        Transformer transformer = EnhancedCDTMain.tf.newTransformer();
+	        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-			DOMSource source = new DOMSource(document);
-			StringWriter writer = new StringWriter();
-			StreamResult result = new StreamResult(writer);
+	        DOMSource source = new DOMSource(document);
+	        StringWriter writer = new StringWriter();
+	        StreamResult result = new StreamResult(writer);
 
-			transformer.transform(source, result);
+	        transformer.transform(source, result);
 
-			String xmlString = writer.toString().replaceAll("\\n\\s*\\n", "\n");
+	        String xmlString = writer.toString().replaceAll("\\n\\s*\\n", "\n");
 
-			DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();	
-			InputSource inputSource = new InputSource(new StringReader(xmlString));
-			return builder.parse(inputSource);
-			
-		} catch (TransformerException e) {
-			e.printStackTrace();
-		}
-		return null;
+	        
+	        xmlString = xmlString.replaceFirst("<Update", "    <Update");
+
+	        DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();
+	        InputSource inputSource = new InputSource(new StringReader(xmlString));
+	        return builder.parse(inputSource);
+	    } catch (TransformerException e) {
+	        e.printStackTrace();
+	    }
+	    return null;
 	}
+
 	public void createXMLFile(String fileLocation, String fileName, String fileData) throws IOException {
 		if (fileData == "") {
 			throw new IllegalArgumentException("No file data given\r\n" + "Please give the file data.");
@@ -243,8 +249,7 @@ public class CDTFileWriter {
 	 * writer.write(cell.getStringCellValue()+"|"); } else { String input =
 	 * cell.getStringCellValue();
 	 * 
-	 * // Create a StringBuilder to build the modified string
-	 * StringBuilder builder
+	 * // Create a StringBuilder to build the modified string StringBuilder builder
 	 * = new StringBuilder(input);
 	 * 
 	 * // Iterate through each character in the StringBuilder for (int i = 0; i <
