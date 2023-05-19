@@ -31,29 +31,30 @@ public class CDTHelper {
 		printMsg(message);
 	}
 
-	// Get Table Primary Key Name
-	public static String getTablePrefix(String tableName) {
+    // Get Table Primary Key Name
+    public static String getTablePrefix(String tableName) {
 		int beginIndex = tableName.indexOf(CDTConstants.hyphen);
-		String name = tableName.substring(beginIndex).toLowerCase();
+        String name = tableName.substring(beginIndex).toLowerCase();
 		name = name.replace(CDTConstants.hyphen, " ");
-		char[] charArray = name.toCharArray();
-		boolean foundSpace = true;
-		for (int i = 0; i < charArray.length; i++) {
-			if (Character.isLetter(charArray[i])) {
-				if (foundSpace) {
-					charArray[i] = Character.toUpperCase(charArray[i]);
-					foundSpace = false;
-				}
-			} else {
-				foundSpace = true;
-			}
-		}
-		String tablePrefix = String.valueOf(charArray);
+        char[] charArray = name.toCharArray();
+        boolean foundSpace = true;
+        for (int i = 0; i < charArray.length; i++) {
+            if (Character.isLetter(charArray[i])) {
+                if (foundSpace) {
+                    charArray[i] = Character.toUpperCase(charArray[i]);
+                    foundSpace = false;
+                }
+            } else {
+                foundSpace = true;
+            }
+        }
+        String tablePrefix = String.valueOf(charArray);
 		tablePrefix = tablePrefix.replaceAll(CDTConstants.spaces, "");
-		return tablePrefix;
-	}
+        return tablePrefix;
+    }
 
-	public static Element createChildElement(Element element, String childName) {
+
+    public static Element createChildElement(Element element, String childName) {
 		Document doc = element.getOwnerDocument();
 		Element childElement = doc.createElement(childName);
 		element.appendChild(childElement);
@@ -91,7 +92,6 @@ public class CDTHelper {
 
 			StringWriter stringWriter = new StringWriter();
 			transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
-
 			return stringWriter.toString();
 		} catch (Exception e) {
 			e.printStackTrace();

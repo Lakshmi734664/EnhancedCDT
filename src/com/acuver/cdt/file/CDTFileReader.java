@@ -41,8 +41,8 @@ public class CDTFileReader {
 		} finally {
 
 			if (fis != null) {
-				fis.close();
-			}
+			fis.close();
+		}
 		}
 
 		EnhancedCDTMain.CDT_REPORT_DIR1 = prop.getProperty(CDTConstants.CDT_REPORT_DIR1);
@@ -82,24 +82,25 @@ public class CDTFileReader {
 
 		ArrayList<String> tableNamesList = new ArrayList<String>();
 		File file = new File(ydkperfs);
-		if (file != null && file.length() > 0) {
-			DocumentBuilder db = null;
-			db = EnhancedCDTMain.factory.newDocumentBuilder();
-			Document doc = null;
-			doc = db.parse(file);
+				if (file != null && file.length() > 0) {
+					DocumentBuilder db = null;
+					db = EnhancedCDTMain.factory.newDocumentBuilder();
+					Document doc = null;
+					doc = db.parse(file);
 			String expression = CDTConstants.forwardSlash + CDTConstants.ignore + CDTConstants.forwardSlash
 					+ CDTConstants.table;
-			NodeList nodeList = null;
-			nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-			for (int itr = 0; itr < nodeList.getLength(); itr++) {
-				Element tableElement = (Element) nodeList.item(itr);
-				String tableName = tableElement.getAttribute("Name");
-				if (tableName != null && !tableName.isEmpty()) {
+					NodeList nodeList = null;
+					nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc,
+							XPathConstants.NODESET);
+					for (int itr = 0; itr < nodeList.getLength(); itr++) {
+						Element tableElement = (Element) nodeList.item(itr);
+						String tableName = tableElement.getAttribute("Name");
+						if (tableName != null && !tableName.isEmpty()) {
 					tableName = tableName + CDTConstants.xmlExtension;
-					tableNamesList.add(tableName);
-				}
+							tableNamesList.add(tableName);
+						}
+					}
 			}
-		}
 		return tableNamesList;
 	}
 
@@ -112,13 +113,13 @@ public class CDTFileReader {
 	}
 
 	// Read File From Directory
-	public Document readFileFromDir(String directory, String fileName) throws Exception {
-		// Creating a File object for directory
-		File file = new File(directory + File.separator + fileName);
+    public Document readFileFromDir(String directory, String fileName) throws Exception {
+        // Creating a File object for directory
+        File file = new File(directory + File.separator + fileName );
 		if (file != null && file.length() > 0) {
-			DocumentBuilder documentBuilder = EnhancedCDTMain.factory.newDocumentBuilder();
-			return documentBuilder.parse(file);
-		}
-		return null;
-	}
+            DocumentBuilder documentBuilder = EnhancedCDTMain.factory.newDocumentBuilder();
+            return documentBuilder.parse(file);
+        }
+        return null;
+    }
 }

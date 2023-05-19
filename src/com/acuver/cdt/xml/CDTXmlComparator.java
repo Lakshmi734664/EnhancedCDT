@@ -9,6 +9,7 @@ import org.w3c.dom.*;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.Diff;
 import org.xmlunit.diff.Difference;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.xpath.XPathConstants;
 import java.io.File;
@@ -27,13 +28,14 @@ public class CDTXmlComparator {
 	private CDTXmlDifferenceEvaluator CDTXmlDifferenceEvaluator = new CDTXmlDifferenceEvaluator();
 
 	private EnhancedCompareGenerator enhancedCompareGenerator = new EnhancedCompareGenerator();
-	private RecordIdentifer recordIdentifer = new RecordIdentifer();
+    private RecordIdentifer recordIdentifer = new RecordIdentifer();
 	private boolean isXML1 = true;
-
 	public Document merge() throws Exception {
 
 		Element root = inputDoc.getDocumentElement();
 		tableName = root.getNodeName();
+
+		CDTHelper.printMsg(tableName);
 
 		// Getting the Table Prefix Name
 		tablePrefix = CDTHelper.getTablePrefix(tableName);
@@ -42,7 +44,9 @@ public class CDTXmlComparator {
 
 		recordIdentifer.setTableName(tableName);
 		recordIdentifer.setTablePrefix(tablePrefix);
-		recordIdentifer.setFileReader(fileReader);
+        recordIdentifer.setFileReader(fileReader);
+
+
 
 		// Processing Insert/Delete Tags
 		inputDoc = processInsertDeleteElements(inputDoc);
@@ -85,6 +89,7 @@ public class CDTXmlComparator {
 			Element deleteElement = recordIdentifer.getMatchingUniqueElement(true);
 			if (deleteElement != null) {
 
+
 				Diff diff = DiffBuilder.compare(insertElement).withTest(deleteElement).checkForSimilar()
 						.ignoreComments().ignoreWhitespace().ignoreElementContentWhitespace().normalizeWhitespace()
 						.withDifferenceEvaluator(CDTXmlDifferenceEvaluator).build();
@@ -116,6 +121,7 @@ public class CDTXmlComparator {
 							int attrNameEndIndex = difference.indexOf("to <");
 
 							String attrName = difference.substring(attrNameStartIndex, attrNameEndIndex).trim();
+
 
 							int oldAttrValueStartIndex = difference.indexOf("but was '") + 9;
 							int oldAttrValueEndIndex = difference.indexOf("- comparing") - 2;
@@ -227,8 +233,7 @@ public class CDTXmlComparator {
 										.ignoreElementContentWhitespace().normalizeWhitespace().build();
 
 								if (diff != null && diff.hasDifferences()) {
-									enhancedCompareGenerator.createEnhancedCompare(updateAttrname,
-											(Element) updateNode);
+									enhancedCompareGenerator.createEnhancedCompare(updateAttrname, (Element)updateNode);
 								} else {
 									System.out.println("No Difference in Sub XML : ");
 
@@ -240,8 +245,7 @@ public class CDTXmlComparator {
 			}
 		}
 
-		if (enhancedCompareGenerator.getProcessedUpdateEnhancedCompareDoc().getDocumentElement().getChildNodes()
-				.getLength() > 0) {
+		if (enhancedCompareGenerator.getProcessedUpdateEnhancedCompareDoc().getDocumentElement().getChildNodes().getLength() > 0) {
 			String fileName = tableName + CDTConstants.xmlExtension;
 			String fullPath = outDir + File.separator + CDTConstants.enhancedCompare;
 			fileWriter.writeFile(fullPath, enhancedCompareGenerator.getProcessedUpdateEnhancedCompareDoc(), fileName);
@@ -250,7 +254,6 @@ public class CDTXmlComparator {
 
 	// Move Updates Doc to ManualReview
 	public void moveUpdatesToManualReview(Document doc) throws Exception {
-
 		String expression = CDTConstants.forwardSlash + CDTConstants.UPDATE;
 		NodeList nodeList = null;
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
@@ -363,66 +366,57 @@ public class CDTXmlComparator {
 		}
 	}
 
+
 	// Checking if the Attribute is Sub XML
 	private boolean isSubXML(String attrName, String attrValue) {
 		return attrValue.startsWith("<?xml");
 	}
 
-	// remove delete tag from document
-	public Document removeDeleteTags(Document doc) {
-		try {
-			debug(doc, "Before removeDeleteTags");
-			NodeList deleteNodesList = doc.getElementsByTagName(CDTConstants.DELETE);
-			Element rootEle = doc.getDocumentElement();
-			int length = deleteNodesList.getLength();
-			for (int i = length - 1; i >= 0; i--) {
-				Node node = deleteNodesList.item(i);
-				rootEle.removeChild(node);
-			}
-			debug(doc, "Before removeDeleteTags");
-			return doc;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
 
-	public void debug(Document doc, String s) throws Exception {
+	// remove delete tag from document
+    public Document removeDeleteTags(Document doc) throws Exception {
+        debug(doc, "Before removeDeleteTags");
+        NodeList deleteNodesList = doc.getElementsByTagName(CDTConstants.DELETE);
+        Element rootEle = doc.getDocumentElement();
+        int length = deleteNodesList.getLength();
+			for (int i = length - 1; i >= 0; i--) {
+            Node node = deleteNodesList.item(i);
+            rootEle.removeChild(node);
+        }
+        debug(doc, "Before removeDeleteTags");
+        return doc;
+    }
+        public void debug(Document doc, String s) throws Exception {
 		String expression = CDTConstants.forwardSlash + CDTConstants.INSERT;
 		NodeList nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 		System.out.println(s + "  Insert nodeList Length() " + nodeList.getLength());
 
 		expression = CDTConstants.forwardSlash + CDTConstants.DELETE;
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-		System.out.println(s + "  Delete nodeList Length() " + nodeList.getLength());
+			System.out.println(s + "  Delete nodeList Length() " + nodeList.getLength());
 
 		expression = CDTConstants.forwardSlash + CDTConstants.UPDATE;
 		nodeList = (NodeList) EnhancedCDTMain.xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
-		System.out.println(s + "  Update nodeList Length() " + nodeList.getLength());
+			System.out.println(s + "  Update nodeList Length() " + nodeList.getLength());
 	}
 
-	public void setInputDoc(Document inputDoc) {
-		this.inputDoc = inputDoc;
-	}
-
-	public void setOutDir(String outDir) {
-		this.outDir = outDir;
-	}
-
-	public void setFileReader(CDTFileReader fileReader) {
-		this.fileReader = fileReader;
-	}
-
-	public void setFileWriter(CDTFileWriter fileWriter) {
-		this.fileWriter = fileWriter;
-	}
-
-	public boolean isXML1() {
-		return isXML1;
-	}
-
-	public void setXML1(boolean XML1) {
-		isXML1 = XML1;
-	}
+    public void setInputDoc(Document inputDoc) {
+        this.inputDoc = inputDoc;
+    }
+    public void setOutDir(String outDir) {
+        this.outDir = outDir;
+    }
+    public void setFileReader(CDTFileReader fileReader) {
+        this.fileReader = fileReader;
+    }
+    public void setFileWriter(CDTFileWriter fileWriter) {
+        this.fileWriter = fileWriter;
+    }
+    public boolean isXML1() {
+        return isXML1;
+    }
+    public void setXML1(boolean XML1) {
+        isXML1 = XML1;
+    }
 
 }

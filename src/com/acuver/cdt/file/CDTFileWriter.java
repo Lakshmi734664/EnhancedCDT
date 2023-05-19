@@ -1,26 +1,8 @@
 package com.acuver.cdt.file;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
+import com.acuver.cdt.EnhancedCDTMain;
+import com.acuver.cdt.util.CDTConstants;
+import com.acuver.cdt.util.CDTHelper;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -28,9 +10,19 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.acuver.cdt.EnhancedCDTMain;
-import com.acuver.cdt.util.CDTConstants;
-import com.acuver.cdt.util.CDTHelper;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class CDTFileWriter {
 
@@ -97,32 +89,32 @@ public class CDTFileWriter {
 		createXMLFile(fullPath, fileName, fileData);
 
 	}
-	
+
 	public Document prettyPrintXml(Document document) throws SAXException, IOException, ParserConfigurationException {
-	    try {
-	        EnhancedCDTMain.tf.setAttribute("indent-number", 4); // Adjust the indentation level as needed
-	        Transformer transformer = EnhancedCDTMain.tf.newTransformer();
-	        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		try {
+			EnhancedCDTMain.tf.setAttribute("indent-number", 4); // Adjust the indentation level as needed
+			Transformer transformer = EnhancedCDTMain.tf.newTransformer();
+			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-	        DOMSource source = new DOMSource(document);
-	        StringWriter writer = new StringWriter();
-	        StreamResult result = new StreamResult(writer);
+			DOMSource source = new DOMSource(document);
+			StringWriter writer = new StringWriter();
+			StreamResult result = new StreamResult(writer);
 
-	        transformer.transform(source, result);
+			transformer.transform(source, result);
 
-	        String xmlString = writer.toString().replaceAll("\\n\\s*\\n", "\n");
+			String xmlString = writer.toString().replaceAll("\\n\\s*\\n", "\n");
 
-	        
-	        xmlString = xmlString.replaceFirst("<Update", "    <Update");
 
-	        DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();
-	        InputSource inputSource = new InputSource(new StringReader(xmlString));
-	        return builder.parse(inputSource);
-	    } catch (TransformerException e) {
-	        e.printStackTrace();
-	    }
-	    return null;
+			xmlString = xmlString.replaceFirst("<Update", "    <Update");
+
+			DocumentBuilder builder = EnhancedCDTMain.factory.newDocumentBuilder();
+			InputSource inputSource = new InputSource(new StringReader(xmlString));
+			return builder.parse(inputSource);
+		} catch (TransformerException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	public void createXMLFile(String fileLocation, String fileName, String fileData) throws IOException {
@@ -211,52 +203,52 @@ public class CDTFileWriter {
 	 * public void readDataFromExcelSheet() { // specify input and output file paths
 	 * String excelFilePath = "D:\\Table.xlsx"; String outputFile =
 	 * "D:\\EnhancedCDT\\recordIdentifier.config";
-	 * 
+	 *
 	 * try {
-	 * 
+	 *
 	 * // create input stream for input file FileInputStream inputStream = new
 	 * FileInputStream(new File(excelFilePath));
-	 * 
+	 *
 	 * // create workbook object for input file XSSFWorkbook Workbook = new
 	 * XSSFWorkbook(inputStream);
-	 * 
+	 *
 	 * // get the first sheet of the workbook XSSFSheet sheet =
 	 * Workbook.getSheetAt(0);
-	 * 
+	 *
 	 * // create FileWriter object for output file FileWriter writer = new
 	 * FileWriter(outputFile);
-	 * 
+	 *
 	 * int rows = sheet.getLastRowNum(); int cols =
 	 * sheet.getRow(0).getLastCellNum();
-	 * 
+	 *
 	 * for (int r = 0; r <= rows; r++) {
-	 * 
+	 *
 	 * if (r == 0) { continue; }
-	 * 
+	 *
 	 * XSSFRow row = sheet.getRow(r);
-	 * 
+	 *
 	 * for (int c = 0; c < cols; c++) {
-	 * 
+	 *
 	 * if (c == 1) { continue; }
-	 * 
+	 *
 	 * XSSFCell cell = row.getCell(c);
-	 * 
+	 *
 	 * if (cell == null) { continue; }
-	 * 
+	 *
 	 * if (c == 0) { System.out.print(cell.getStringCellValue() + "=");
 	 * writer.write(cell.getStringCellValue() + "="); } else if (c==2) {
 	 * System.out.print(cell.getStringCellValue()+"|");
 	 * writer.write(cell.getStringCellValue()+"|"); } else { String input =
 	 * cell.getStringCellValue();
-	 * 
+	 *
 	 * // Create a StringBuilder to build the modified string StringBuilder builder
 	 * = new StringBuilder(input);
-	 * 
+	 *
 	 * // Iterate through each character in the StringBuilder for (int i = 0; i <
 	 * builder.length(); i++) { // Check if the character is '+' if
 	 * (builder.charAt(i) == '+') { // Replace '+' with ',' builder.setCharAt(i,
 	 * ','); } }
-	 * 
+	 *
 	 * // Convert the StringBuilder back to a string String output =
 	 * builder.toString(); System.out.print(output); writer.write(output); } } //
 	 * move to the next line in the output file writer.write("\n");
