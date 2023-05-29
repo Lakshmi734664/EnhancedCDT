@@ -12,7 +12,7 @@ import javax.xml.xpath.XPathConstants;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RecordIdentifer{
+public class RecordIdentifer {
     private String tableName;
     private String tablePrefix;
     private Document doc;
@@ -69,7 +69,6 @@ public class RecordIdentifer{
                 String[] identifiers = configValue.split(",");
                 for (String identifier : identifiers) {
                     String attrValue = null;
-
                     if (identifier.contains("|")) {
                         addParentKeyValue(identifier, tblRecordIdentifierMap);
                     } else {
@@ -96,23 +95,24 @@ public class RecordIdentifer{
         Document parentDoc = fileReader.readFileFromDir(EnhancedCDTMain.CDT_XMLS2, parentTable);
 
         //get the insert element from parent table with child insert element key
+        if (parentDoc != null) {
+            Element parentInsertEle = getElementUsingXpath(
+                    new StringBuffer("//[@" + parentKeyAttr + "='" + attrValue + "']"), false, parentDoc);
 
-        Element parentInsertEle = getElementUsingXpath(
-                new StringBuffer("//[@" + parentKeyAttr + "='" + attrValue + "']"), false, parentDoc);
-
-        if (parentInsertEle != null) {
-            String parentTablePrefix = CDTHelper.getTablePrefix(parentTable);
-            RecordIdentifer parentRecordIdentifer = new RecordIdentifer();
-            parentRecordIdentifer.setTableName(parentTable);
-            parentRecordIdentifer.setTablePrefix(parentTablePrefix);
-            parentRecordIdentifer.setDoc(parentDoc);
-            parentRecordIdentifer.setElemToMatch(parentInsertEle);
-            Element deleteElement = parentRecordIdentifer.getMatchingUniqueElement(true);
-            if (deleteElement != null) {
-                attrValue = deleteElement.getAttribute(parentKeyAttr);
+            if (parentInsertEle != null) {
+                String parentTablePrefix = CDTHelper.getTablePrefix(parentTable);
+                RecordIdentifer parentRecordIdentifer = new RecordIdentifer();
+                parentRecordIdentifer.setTableName(parentTable);
+                parentRecordIdentifer.setTablePrefix(parentTablePrefix);
+                parentRecordIdentifer.setDoc(parentDoc);
+                parentRecordIdentifer.setElemToMatch(parentInsertEle);
+                Element deleteElement = parentRecordIdentifer.getMatchingUniqueElement(true);
+                if (deleteElement != null) {
+                    attrValue = deleteElement.getAttribute(parentKeyAttr);
+                }
             }
+            addRecordIdentifier(parentKeyAttr.toLowerCase(), attrValue, tblRecordIdentifierMap);
         }
-        addRecordIdentifier(parentKeyAttr.toLowerCase(), attrValue, tblRecordIdentifierMap);
     }
 
     private void addRecordIdentifier(String name, String value, Map<String, String> recordIdentifierMap) {
