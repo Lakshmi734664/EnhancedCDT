@@ -62,11 +62,12 @@ public class CDTXmlComparator {
 		enhancedCompareGenerator.setProcessedUpdateEnhancedCompareDoc(processedUpdateEnhancedCompareDoc);
 
 		// Process the Updates
-		processUpdates(inputDoc);
+		inputDoc = processUpdates(inputDoc);
 
 		// Moving Update Elements to Manual Folder
 		moveUpdatesToManualReview(inputDoc);
 
+		// Remove the Deletes
 		inputDoc = removeDeleteTags(inputDoc);
 
 		return inputDoc;
@@ -154,43 +155,31 @@ public class CDTXmlComparator {
 	// Process the Updates
 	public Document processUpdates(Document doc) throws Exception {
 		debug(doc, "Before processUpdates");
-		NodeList nodeList = doc.getDocumentElement().getElementsByTagName(CDTConstants.OLDVALUES);
-		if (nodeList != null && nodeList.getLength() > 0) {
-			for (int itr = 0; itr < nodeList.getLength(); itr++) {
-				Node oldValueNode = nodeList.item(itr);
-				Node updateNode = oldValueNode.getParentNode();
-				NamedNodeMap attrList = oldValueNode.getAttributes();
-				for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
-					Node oldValueAttr = attrList.item(attrItr);
-					String oldValueAttrName = oldValueAttr.getNodeName();
-					String oldValueAttrValue = oldValueAttr.getNodeValue();
-					if (isSubXML(oldValueAttrName, oldValueAttrValue)) {
-						NamedNodeMap updateAttrList = updateNode.getAttributes();
-						Diff diff = null;
-						for (int attrItr2 = 0; attrItr2 < updateAttrList.getLength(); attrItr2++) {
-							Node updateAttr = updateAttrList.item(attrItr2);
-							String updateAttrname = updateAttr.getNodeName();
-							String updateAttrValue = updateAttr.getNodeValue();
+		NodeList nodeList = doc.getDocumentElement().getElementsByTagName(CDTConstants.UPDATE);
+		for (int itr = 0; itr < nodeList.getLength(); itr++) {
+			Element updateEle = (Element) nodeList.item(itr);
+			Node oldValueNode = updateEle.getElementsByTagName(CDTConstants.OLDVALUES).item(0);
+			NamedNodeMap attrList = oldValueNode.getAttributes();
+			for (int attrItr = 0; attrItr < attrList.getLength(); attrItr++) {
+				Node oldValueAttr = attrList.item(attrItr);
+				String oldValueAttrName = oldValueAttr.getNodeName();
+				String oldValueAttrValue = oldValueAttr.getNodeValue();
+				if (isSubXML(oldValueAttrName, oldValueAttrValue)) {
 
-							if (oldValueAttrName.equalsIgnoreCase(updateAttrname)) {
+					String updateAttrValue = updateEle.getAttribute(oldValueAttrName);
+					Diff diff = DiffBuilder.compare(oldValueAttrValue).withTest(updateAttrValue).checkForSimilar()
+							.ignoreComments().ignoreWhitespace().ignoreElementContentWhitespace().normalizeWhitespace()
+							.build();
 
-								diff = DiffBuilder.compare(oldValueAttrValue).withTest(updateAttrValue)
-										.checkForSimilar().ignoreComments().ignoreWhitespace()
-										.ignoreElementContentWhitespace().normalizeWhitespace().build();
-
-								if (diff != null && diff.hasDifferences()) {
-									enhancedCompareGenerator.createEnhancedCompare(updateAttrname,
-											(Element) updateNode);
-								} else {
-									updateNode.getParentNode().removeChild(updateNode);
-								}
-								break;
-							}
-						}
+					if (diff != null && diff.hasDifferences()) {
+						enhancedCompareGenerator.createEnhancedCompare(oldValueAttrName, updateEle);
+					} else {
+						updateEle.getParentNode().removeChild(updateEle);
 					}
 				}
 			}
 		}
+
 		if (enhancedCompareGenerator.getProcessedUpdateEnhancedCompareDoc().getDocumentElement().getChildNodes()
 				.getLength() > 0) {
 			String fileName = tableName + CDTConstants.xmlExtension;
@@ -329,7 +318,7 @@ public class CDTXmlComparator {
 			Node node = deleteNodesList.item(i);
 			rootEle.removeChild(node);
 		}
-		debug(doc, "Before removeDeleteTags");
+		debug(doc, "After removeDeleteTags");
 		return doc;
 	}
 
