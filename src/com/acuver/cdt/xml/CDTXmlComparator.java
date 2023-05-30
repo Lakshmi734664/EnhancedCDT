@@ -14,8 +14,10 @@ import javax.xml.parsers.DocumentBuilder;
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 public class CDTXmlComparator {
 	private String tableName;
@@ -52,10 +54,9 @@ public class CDTXmlComparator {
 			inputDoc = processInsertDeleteElements(inputDoc);
 		}
 
-		Document processedUpdateEnhancedCompareDoc = null;
 		DocumentBuilder parser = EnhancedCDTMain.factory.newDocumentBuilder();
 		// Create a new Processed document with Root Element
-		processedUpdateEnhancedCompareDoc = parser.newDocument();
+		Document processedUpdateEnhancedCompareDoc = parser.newDocument();
 		Element parentElement = processedUpdateEnhancedCompareDoc.createElement(tableName);
 		processedUpdateEnhancedCompareDoc.appendChild(parentElement);
 
@@ -77,6 +78,7 @@ public class CDTXmlComparator {
 		Element rootEle = doc.getDocumentElement();
 		NodeList nodeList = doc.getDocumentElement().getElementsByTagName(CDTConstants.INSERT);
 		debug(doc, "Before processInsertDeleteElements");
+		List<Node> insertNodesRmvList = new ArrayList<Node>();
 		for (int itr = 0; itr < nodeList.getLength(); itr++) {
 
 			Element insertElement = (Element) nodeList.item(itr);
@@ -142,10 +144,16 @@ public class CDTXmlComparator {
 
 				} else {
 				}
-
-				rootEle.removeChild(insertElement);
+				insertNodesRmvList.add(insertElement);
 				rootEle.removeChild(deleteElement);
 
+			}
+		}
+
+		if (!insertNodesRmvList.isEmpty()) {
+			for (int i = 0; i < insertNodesRmvList.size(); i++) {
+				Node insertEle = insertNodesRmvList.get(i);
+				rootEle.removeChild(insertEle);
 			}
 		}
 		debug(doc, "After processInsertDeleteElements");
@@ -322,15 +330,15 @@ public class CDTXmlComparator {
 		return doc;
 	}
 
-	public void debug(Document doc, String s) throws Exception {
-
-		NodeList nodeList = doc.getDocumentElement().getElementsByTagName(CDTConstants.INSERT);
+	public void debug(Document doc, String s) {
+		Element ele = doc.getDocumentElement();
+		NodeList nodeList = ele.getElementsByTagName(CDTConstants.INSERT);
 		System.out.println(s + "  Insert nodeList Length() " + nodeList.getLength());
 
-		nodeList = doc.getDocumentElement().getElementsByTagName(CDTConstants.DELETE);
+		nodeList = ele.getElementsByTagName(CDTConstants.DELETE);
 		System.out.println(s + "  Delete nodeList Length() " + nodeList.getLength());
 
-		nodeList = doc.getDocumentElement().getElementsByTagName(CDTConstants.UPDATE);
+		nodeList = ele.getElementsByTagName(CDTConstants.UPDATE);
 		System.out.println(s + "  Update nodeList Length() " + nodeList.getLength());
 	}
 
