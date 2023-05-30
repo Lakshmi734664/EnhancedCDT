@@ -77,13 +77,6 @@ public class CDTHelper {
 				break;
 			}
 		}
-		// Create new child element if it doesn't exist
-		if (childElement == null) {
-			Document doc = element.getOwnerDocument();
-			childElement = doc.createElement(childName);
-			element.appendChild(childElement);
-		}
-
 		return childElement;
 	}
 
