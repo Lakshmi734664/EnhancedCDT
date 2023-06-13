@@ -1,16 +1,5 @@
 package com.acuver.cdt.xml;
 
-import com.acuver.cdt.EnhancedCDTMain;
-import com.acuver.cdt.file.CDTFileReader;
-import com.acuver.cdt.file.CDTFileWriter;
-import com.acuver.cdt.util.CDTConstants;
-import com.acuver.cdt.util.CDTHelper;
-import org.w3c.dom.*;
-import org.xmlunit.builder.DiffBuilder;
-import org.xmlunit.diff.Diff;
-import org.xmlunit.diff.Difference;
-
-import javax.xml.parsers.DocumentBuilder;
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -19,17 +8,33 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.diff.Diff;
+import org.xmlunit.diff.Difference;
+
+import com.acuver.cdt.EnhancedCDTMain;
+import com.acuver.cdt.file.CDTFileReader;
+import com.acuver.cdt.file.CDTFileWriter;
+import com.acuver.cdt.util.CDTConstants;
+import com.acuver.cdt.util.CDTHelper;
+
 public class CDTXmlComparator {
+	private final CDTXmlDifferenceEvaluator CDTXmlDifferenceEvaluator = new CDTXmlDifferenceEvaluator();
+	private final EnhancedCompareGenerator enhancedCompareGenerator = new EnhancedCompareGenerator();
+	private final RecordIdentifer recordIdentifer = new RecordIdentifer();
 	private String tableName;
 	private String tablePrefix;
 	private String outDir;
 	private Document inputDoc;
 	private CDTFileReader fileReader;
 	private CDTFileWriter fileWriter;
-	private CDTXmlDifferenceEvaluator CDTXmlDifferenceEvaluator = new CDTXmlDifferenceEvaluator();
-
-	private EnhancedCompareGenerator enhancedCompareGenerator = new EnhancedCompareGenerator();
-	private RecordIdentifer recordIdentifer = new RecordIdentifer();
 	private boolean isXML1 = true;
 
 	public Document merge() throws Exception {
@@ -163,7 +168,9 @@ public class CDTXmlComparator {
 	// Process the Updates
 	public Document processUpdates(Document doc) throws Exception {
 		debug(doc, "Before processUpdates");
-		NodeList nodeList = doc.getDocumentElement().getElementsByTagName(CDTConstants.UPDATE);
+		Element rootEle = doc.getDocumentElement();
+		NodeList nodeList = rootEle.getElementsByTagName(CDTConstants.UPDATE);
+		List<Node> nodesRmvList = new ArrayList<Node>();
 		for (int itr = 0; itr < nodeList.getLength(); itr++) {
 			Element updateEle = (Element) nodeList.item(itr);
 			Node oldValueNode = updateEle.getElementsByTagName(CDTConstants.OLDVALUES).item(0);
@@ -182,9 +189,16 @@ public class CDTXmlComparator {
 					if (diff != null && diff.hasDifferences()) {
 						enhancedCompareGenerator.createEnhancedCompare(oldValueAttrName, updateEle);
 					} else {
-						updateEle.getParentNode().removeChild(updateEle);
+						nodesRmvList.add(updateEle);
 					}
 				}
+			}
+		}
+
+		if (!nodesRmvList.isEmpty()) {
+			for (int i = 0; i < nodesRmvList.size(); i++) {
+				Node insertEle = nodesRmvList.get(i);
+				rootEle.removeChild(insertEle);
 			}
 		}
 
@@ -200,8 +214,9 @@ public class CDTXmlComparator {
 
 	// Move Updates Doc to ManualReview
 	public void moveUpdatesToManualReview(Document doc) throws Exception {
-
-		NodeList nodeList = doc.getDocumentElement().getElementsByTagName(CDTConstants.UPDATE);
+		debug(doc, "Before moveUpdatesToManualReview");
+		Element rootEle = doc.getDocumentElement();
+		NodeList nodeList = rootEle.getElementsByTagName(CDTConstants.UPDATE);
 
 		String primaryKeyName = tablePrefix + CDTConstants.key;
 
@@ -212,7 +227,7 @@ public class CDTXmlComparator {
 		Document processedManualReviewDoc = parser.newDocument();
 		Element parentElementEnhancedCompare = processedManualReviewDoc.createElement(tableName);
 		processedManualReviewDoc.appendChild(parentElementEnhancedCompare);
-
+		List<Node> nodesRmvList = new ArrayList<Node>();
 		for (int itr = 0; itr < nodeList.getLength(); itr++) {
 			Node updateNode = nodeList.item(itr);
 
@@ -294,8 +309,14 @@ public class CDTXmlComparator {
 					processedManualReviewDoc.getDocumentElement().appendChild(importedUpdateNode);
 
 					// Removing this update Node from inputDoc
-					inputDoc.getDocumentElement().removeChild(updateNode);
+					nodesRmvList.add(updateNode);
 				}
+			}
+		}
+		if (!nodesRmvList.isEmpty()) {
+			for (int i = 0; i < nodesRmvList.size(); i++) {
+				Node insertEle = nodesRmvList.get(i);
+				rootEle.removeChild(insertEle);
 			}
 		}
 
@@ -309,6 +330,7 @@ public class CDTXmlComparator {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		debug(doc, "After moveUpdatesToManualReview");
 	}
 
 	// Checking if the Attribute is Sub XML
@@ -356,10 +378,6 @@ public class CDTXmlComparator {
 
 	public void setFileWriter(CDTFileWriter fileWriter) {
 		this.fileWriter = fileWriter;
-	}
-
-	public boolean isXML1() {
-		return isXML1;
 	}
 
 	public void setXML1(boolean XML1) {

@@ -1,16 +1,19 @@
 package com.acuver.cdt.util;
 
-import com.acuver.cdt.EnhancedCDTMain;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import java.io.StringWriter;
+import java.util.Collections;
 
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.StringWriter;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import com.acuver.cdt.EnhancedCDTMain;
 
 public class CDTHelper {
 
@@ -19,18 +22,25 @@ public class CDTHelper {
 	}
 
 	public static void showPropertiesFileHelpMsg() {
-		String message = "Please create a file enhancedcdt.properties in the current folder. The following properties can be configured.\r\n"
-				+ "	CDT_REPORT_DIR1                 Source Env-1 and Target Env-2 CDT Compare Report Folder\r\n"
-				+ "	CDT_REPORT_DIR2 	        Source Env-2 and Target Env-1 CDT Compare Report Folder\r\n"
-				+ "	CDT_XMLS1  			Env-1 CDT Export XMLs Folder\r\n"
-				+ "	CDT_XMLS2  			Env-2 CDT Export XMLs Folder\r\n"
-				+ "	YDKPREF1			Env-1 ydfprefs.xml (Optional) \r\n"
-				+ "        YDKPERF2	                Env-2 ydfprefs.xml (Optional) \r\n"
-				+ "        OUTPUT_DIR 			Output Folder(Optional)\r\n"
-				+ "	CDT_REPORT_OUT_DIR1             Used with mergeManualReview option. Source Env-1 and Target Env-2 Enhanced CDT Compare Report Folder\r\n"
-				+ "	CDT_REPORT_OUT_DIR2             Used with mergeManualReview option. Source Env-2 and Target Env-1 Enhanced CDT Compare Report Folder";
+		printMsg(
+				"Please create a file enhancedcdt.properties in the current folder. The following properties can be configured.");
+		printHelpMsgLine("CDT_REPORT_DIR1", "Source Env-1 and Target Env-2 CDT Compare Report Folder");
+		printHelpMsgLine("CDT_REPORT_DIR2", "Source Env-2 and Target Env-1 CDT Compare Report Folder");
+		printHelpMsgLine("CDT_XMLS1", "Env-1 CDT Export XMLs Folder");
+		printHelpMsgLine("CDT_XMLS2", "Env-2 CDT Export XMLs Folder");
+		printHelpMsgLine("YDKPREF1", "Env-1 ydfprefs.xml (Optional)");
+		printHelpMsgLine("YDKPREF2", "Env-2 ydfprefs.xml (Optional)");
+		printHelpMsgLine("OUTPUT_DIR", "Output Folder(Optional)");
+		printHelpMsgLine("CDT_REPORT_OUT_DIR1",
+				"Used with mergeManualReview option. Source Env-1 and Target Env-2 Enhanced CDT Compare Report Folder");
+		printHelpMsgLine("CDT_REPORT_OUT_DIR2",
+				"Used with mergeManualReview option. Source Env-2 and Target Env-1 Enhanced CDT Compare Report Folder");
+	}
 
-		printMsg(message);
+	public static void printHelpMsgLine(String arg, String desc) {
+		String sb = String.join("", Collections.nCopies(2, " ")) + String.format("%-25s", arg) + desc;
+
+		printMsg(sb);
 	}
 
 	// Get Table Primary Key Name

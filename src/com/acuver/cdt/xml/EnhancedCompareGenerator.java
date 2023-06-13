@@ -1,18 +1,31 @@
 package com.acuver.cdt.xml;
 
-import com.acuver.cdt.EnhancedCDTMain;
-import com.acuver.cdt.util.CDTConstants;
-import org.w3c.dom.*;
-import org.xml.sax.InputSource;
-
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.xml.xpath.XPathConstants;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.diff.Diff;
+
+import com.acuver.cdt.EnhancedCDTMain;
+import com.acuver.cdt.util.CDTConstants;
+import com.acuver.cdt.util.CDTHelper;
+
 public class EnhancedCompareGenerator {
 
 	Document processedUpdateEnhancedCompareDoc;
+
+	String rootName = null;
 
 	public void createEnhancedCompare(String updateAttrName, Element updateElement) throws Exception {
 
@@ -30,6 +43,8 @@ public class EnhancedCompareGenerator {
 		Element oldAttrValueEle = removeWhiteSpaceNodes(oldAttrValueDoc.getDocumentElement());
 		Element newAttrValueEle = removeWhiteSpaceNodes(newAttrValueDoc.getDocumentElement());
 
+		rootName = oldAttrValueEle.getNodeName();
+
 		removeIfEqual(oldAttrValueEle, newAttrValueEle);
 
 		// cloned the subxml as it will be modified to keep only differences , original
@@ -41,20 +56,20 @@ public class EnhancedCompareGenerator {
 		// vice-versa
 		Element newDiffEle = (Element) newAttrValueEle.cloneNode(true);
 
-		diffNode(newDiffEle, oldAttrValueDoc.getDocumentElement());
+		diffNode(newDiffEle, oldAttrValueEle);
 
 		// import update element and enhanced compare element in
 		// processedUpdateEnhancedCompareDoc.
 		// Skip this, if both oldDiffEle/newDiffEle has root ele only
 
-		if (oldDiffEle.hasChildNodes() || newDiffEle.getChildNodes().getLength() > 0) {
+		if (oldDiffEle.hasChildNodes() || newDiffEle.hasChildNodes()) {
 			Node importedUpdateNode = processedUpdateEnhancedCompareDoc.importNode(updateElement, true);
 			processedUpdateEnhancedCompareDoc.getDocumentElement().appendChild(importedUpdateNode);
 
 			Element enhancedCompareEle = processedUpdateEnhancedCompareDoc.createElement("EnhancedCompare");
-			Element attributeEle = processedUpdateEnhancedCompareDoc.createElement("Attribute");
-			Element oldAttrEle = processedUpdateEnhancedCompareDoc.createElement("Old");
-			Element newAttrEle = processedUpdateEnhancedCompareDoc.createElement("New");
+			Element attributeEle = processedUpdateEnhancedCompareDoc.createElement(CDTConstants.attribute);
+			Element oldAttrEle = processedUpdateEnhancedCompareDoc.createElement(CDTConstants.old);
+			Element newAttrEle = processedUpdateEnhancedCompareDoc.createElement(CDTConstants.New);
 
 			attributeEle.setAttribute("Name", updateAttrName);
 
@@ -77,14 +92,27 @@ public class EnhancedCompareGenerator {
 	}
 
 	private void diffNode(Element oldAttrValueEle, Element newAttrValueEle) throws Exception {
-
-		if (oldAttrValueEle.getNodeName().equalsIgnoreCase("Points")) {
+		String nodeName = oldAttrValueEle.getNodeName();
+		if (nodeName.equals("Points")) {
 			if (oldAttrValueEle.getParentNode() != null)
 				oldAttrValueEle.getParentNode().removeChild(oldAttrValueEle);
 			return;
-		}
+		} else if (nodeName.equals("Template")) {
 
-		Element matchingSubEle = diffAttributes(oldAttrValueEle, newAttrValueEle);
+			Diff diff = DiffBuilder.compare(oldAttrValueEle)
+					.withTest(CDTHelper.getChildElement(newAttrValueEle, nodeName)).checkForSimilar().ignoreComments()
+					.ignoreWhitespace().ignoreElementContentWhitespace().normalizeWhitespace().build();
+			if (!(diff.hasDifferences())) {
+				oldAttrValueEle.getParentNode().removeChild(oldAttrValueEle);
+				return;
+			}
+
+		}
+		Element matchingSubEle = null;
+		if (oldAttrValueEle.getNodeName().equalsIgnoreCase(rootName)) {
+			matchingSubEle = newAttrValueEle;
+		} else
+			matchingSubEle = diffAttributes(oldAttrValueEle, newAttrValueEle);
 
 		if (matchingSubEle != null) {
 
@@ -94,7 +122,8 @@ public class EnhancedCompareGenerator {
 			// Get list of all child nodes for oldAttr and iterate through it.
 			NodeList subChildElementNodeList = oldAttrValueEle.getChildNodes();
 
-			for (int m = 0; m < subChildElementNodeList.getLength(); m++) {
+			for (int m = subChildElementNodeList.getLength() - 1; m >= 0; m--) {
+				// for (int m = 0; m < subChildElementNodeList.getLength() ; m++) {
 				Node subChildNode = subChildElementNodeList.item(m);
 				if (subChildNode.getNodeType() == Node.ELEMENT_NODE) {
 					Element subChildElement = (Element) subChildNode;
@@ -103,16 +132,16 @@ public class EnhancedCompareGenerator {
 					diffNode(subChildElement, matchingSubEle);
 				}
 			}
+			// }
 
+			removeWhiteSpaceNodes(oldAttrValueEle);
+
+			if (!(oldAttrValueEle.hasAttributes()) && !(oldAttrValueEle.hasChildNodes())) {
+				if (oldAttrValueEle.getParentNode() != null) {
+					oldAttrValueEle.getParentNode().removeChild(oldAttrValueEle);
+				}
+			}
 		}
-
-		removeWhiteSpaceNodes(oldAttrValueEle);
-
-		if (!(oldAttrValueEle.hasAttributes()) && !(oldAttrValueEle.hasChildNodes())) {
-			if (oldAttrValueEle.getParentNode() != null)
-				oldAttrValueEle.getParentNode().removeChild(oldAttrValueEle);
-		}
-
 	}
 
 	private void removeAttrIfEqual(Element oldAttrValueEle, Element newAttrValueEle) {
@@ -134,26 +163,16 @@ public class EnhancedCompareGenerator {
 				String newAttrValue = newAttr.getValue().trim();
 
 				// Compare attribute values
-				if (oldAttrValue.equalsIgnoreCase(newAttrValue)) {
+				if (oldAttrValue.equals(newAttrValue)) {
 
 					// Add the Attribute which needs to be removed in oldChildAttrRmvList
 					oldChildAttrRmvList.add(oldAttr);
-
-					// Remove the New attribute
-					newAttrValueEle.removeAttributeNode(newAttr);
-
-				}
-				if (oldAttrValue.matches("\\d+") && oldAttrValue.length() > 5) {
+				} else if (oldAttrValue.matches("\\d+") && oldAttrValue.length() > 5) {
 					// Add the Attribute which needs to be removed in oldChildAttrRmvList
 
 					oldChildAttrRmvList.add(oldAttr);
 				}
-				if (newAttrValue.matches("\\d+") && newAttrValue.length() > 5) {
 
-					if (newAttrValueEle.hasAttribute(newAttr.getName())) {
-						newAttrValueEle.removeAttributeNode(newAttr);
-					}
-				}
 			}
 		}
 
@@ -222,11 +241,135 @@ public class EnhancedCompareGenerator {
 		 * nodes as matching and continue 4. If attribute name is number and length > 5
 		 * , ignore
 		 */
+		Element matchingElement = null;
+		NodeList actualElementNodes = null;
+		String nodeName = expectedElement.getNodeName();
+		String xpath = null;
+		boolean customAPI = false;
+		if (nodeName.equals("Node")) {
+			Element propEle = CDTHelper.getChildElement(expectedElement, "Properties");
+			if (propEle != null) {
 
-		NodeList actualElementNodes = actualElement.getElementsByTagName(expectedElement.getNodeName());
+				String nodeType = expectedElement.getAttribute("NodeType");
+				switch (nodeType) {
+				case "API":
+					if ("Custom".equals(propEle.getAttribute("APIType"))) {
+						String className = propEle.getAttribute("ClassName");
+						String methodName = propEle.getAttribute("MethodName");
+						xpath = "//Node/Properties[@ClassName='" + className + "' and @MethodName='" + methodName
+								+ "']";
+						customAPI = true;
+					} else {
+						String apiName = propEle.getAttribute("APIName");
+						xpath = "//Node[Properties/@APIName='" + apiName + "']";
+					}
+					break;
+				case "Condition":
+					String name = propEle.getAttribute("ConditionKey_ConditionName");
+					if (!name.isEmpty()) {
+						xpath = "//Node[Properties/@ConditionKey_ConditionName='" + name + "']";
+					}
+					break;
+				case "CompositeFlow":
+					NodeList flowList = expectedElement.getElementsByTagName("Flow");
+					// Node[Properties/FlowList/Flow/@FlowName='SGTPostEmailReminderDB' or
+					// @FlowName='SGTPostEmailReminderMsgToHybrisQ']
+					if (flowList.getLength() > 0) {
+						StringBuffer xpathStr = new StringBuffer("//Node[Properties/FlowList/Flow/");
+						for (int itr = 0; itr < flowList.getLength(); itr++) {
+							Element flowEle = (Element) flowList.item(itr);
+							if (itr > 0)
+								xpathStr.append(" or ");
+							xpathStr.append("@FlowName='" + flowEle.getAttribute("FlowName") + "'");
+
+						}
+						xpathStr.append("]");
+						xpath = xpathStr.toString();
+					}
+					break;
+				case "TextTranslator":
+					String schemaName = propEle.getAttribute("SchemaName");
+					xpath = "//Node[Properties/@SchemaName='" + schemaName + "']";
+					break;
+				case "XSL_Translator":
+					String XSLName = propEle.getAttribute("XSLName");
+					xpath = "//Node[Properties/@XSLName='" + XSLName + "']";
+					break;
+				case "DTE":
+					String XmlName = propEle.getAttribute("XmlName");
+					xpath = "//Node[Properties/@XmlName='" + XmlName + "']";
+					break;
+				case "Router":
+					String DocumentId = propEle.getAttribute("DocumentId");
+					xpath = "//Node[Properties/@DocumentId='" + DocumentId + "']";
+					break;
+				case "Alert":
+					String ExceptionType = propEle.getAttribute("ExceptionType");
+					xpath = "//Node[Properties/@ExceptionType='" + ExceptionType + "']";
+					break;
+				case "SendMail":
+					String Subject = propEle.getAttribute("Subject");
+					xpath = "//Node[Properties/@Subject='" + Subject + "']";
+					break;
+				case "Defaulting":
+					NodeList OverrideList = expectedElement.getElementsByTagName("Override");
+					if (OverrideList.getLength() > 0) {
+						Element overrideEle = (Element) OverrideList.item(0);
+						String attr = overrideEle.getAttribute("Attribute");
+
+						xpath = "//Node[Properties/CustomOverrides/Override/@Attribute='" + attr + "']";
+
+					}
+					break;
+
+				case "JasperPrint":
+					String JasperReportName = propEle.getAttribute("JasperReportName");
+					xpath = "//Node[Properties/@JasperReportName='" + JasperReportName + "']";
+					break;
+				case "Start":
+				case "End":
+				case "DataSecurity":
+					xpath = "//Node[@NodeType='" + nodeType + "']";
+
+				}
+
+			}
+		} else if (nodeName.equals("Link")) {
+			Element propEle = CDTHelper.getChildElement(expectedElement, "Properties");
+			if (propEle != null) {
+				String transportType = expectedElement.getAttribute("TransportType");
+				switch (transportType) {
+				case "DB":
+					String TableName = propEle.getAttribute("TableName");
+					xpath = "//Link[Properties/@TableName='" + TableName + "']";
+					break;
+				case "JMS":
+				case "GJMS":
+				case "TOPICJMS":
+					String QName = propEle.getAttribute("QName");
+					xpath = "//Link[Properties/@QName='" + QName + "']";
+					break;
+				case "SGJMS":
+					String name = propEle.getAttribute("QName");
+					xpath = "//Link[Properties/RequestProperties/@QName='" + name + "']";
+					break;
+				case "WEBSERVICE":
+					String MethodName = propEle.getAttribute("MethodName");
+					xpath = "//Link[Properties/@MethodName='" + MethodName + "']";
+
+				}
+			}
+		} else if (nodeName.equals("Flow")) {
+			xpath = "//Flow[@FlowName='" + expectedElement.getAttribute("FlowName") + "']";
+		}
+
+		if (xpath != null) {
+			actualElementNodes = (NodeList) EnhancedCDTMain.xPath.compile(xpath).evaluate(actualElement,
+					XPathConstants.NODESET);
+		} else
+			actualElementNodes = actualElement.getElementsByTagName(nodeName);
 
 		int minDiffCount = Integer.MAX_VALUE;
-		Element matchingElement = null;
 
 		ArrayList<Integer> countList = new ArrayList<Integer>();
 
@@ -235,6 +378,8 @@ public class EnhancedCompareGenerator {
 			Node actualElementNode = actualElementNodes.item(itr);
 
 			Element actualEle = (Element) actualElementNode;
+			if (customAPI)
+				actualEle = (Element) actualElementNode.getParentNode();
 			int count = getAttributeDiffCount(expectedElement, actualEle);
 
 			countList.add(count);
@@ -250,8 +395,30 @@ public class EnhancedCompareGenerator {
 			int min = Collections.min(countList);
 			int max = Collections.max(countList);
 
-			if (min == max)
-				return null;
+			if (min == max && expectedElement.getAttribute("NodeType").equals("API")) {
+				Element expTemplateEle = (Element) expectedElement.getElementsByTagName("Template").item(0);
+				if (expTemplateEle != null) {
+					for (int itr = 0; itr < actualElementNodes.getLength(); itr++) {
+						Node actualElementNode = actualElementNodes.item(itr);
+						Element actualEle = (Element) actualElementNode;
+						Element actualTemplateEle = (Element) actualEle.getElementsByTagName("Template").item(0);
+
+						try {
+							Diff diff = DiffBuilder.compare(expTemplateEle).withTest(actualTemplateEle)
+									.checkForSimilar().ignoreComments().ignoreWhitespace()
+									.ignoreElementContentWhitespace().normalizeWhitespace().build();
+							if (!(diff.hasDifferences())) {
+								if (customAPI)
+									actualEle = (Element) actualElementNode.getParentNode();
+								return actualEle;
+							}
+						} catch (Exception e) {
+							//throw e;
+						}
+
+					}
+				}
+			}
 		}
 		return matchingElement;
 	}

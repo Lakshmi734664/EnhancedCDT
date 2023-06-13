@@ -1,20 +1,23 @@
 package com.acuver.cdt;
 
-import com.acuver.cdt.file.CDTFileReader;
-import com.acuver.cdt.file.CDTFileWriter;
-import com.acuver.cdt.util.CDTHelper;
-import com.acuver.cdt.xml.CDTXmlComparator;
-import org.w3c.dom.Document;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
+
+import org.w3c.dom.Document;
+
+import com.acuver.cdt.file.CDTFileReader;
+import com.acuver.cdt.file.CDTFileWriter;
+import com.acuver.cdt.util.CDTConstants;
+import com.acuver.cdt.util.CDTHelper;
+import com.acuver.cdt.xml.CDTXmlComparator;
 
 public class EnhancedCDTMain {
 
@@ -37,6 +40,7 @@ public class EnhancedCDTMain {
 	public static String CDT_REPORT_OUT_DIR1 = null;
 	public static String CDT_REPORT_OUT_DIR2 = null;
 
+	public static String runOption = null;
 	public static Map<String, String> recordIdentifierMap;
 
 	public static void main(String[] argMode) throws Exception {
@@ -52,15 +56,16 @@ public class EnhancedCDTMain {
 				CDTHelper.showPropertiesFileHelpMsg();
 				break;
 			case "--merge":
+				runOption = CDTConstants.manual;
 				fileReader.readPropertiesFile();
 				fileReader.populateRecordIdentifier();
 				mergeCDTReports(fileReader, fileWriter);
-				// fileWriter.readDataFromExcelSheet();
 				break;
 			case "--mergeManualReview":
+				runOption = "mergeManualReview";
 				fileReader.readPropertiesFile();
 				fileWriter.mergeAfterReview(CDT_REPORT_OUT_DIR1);
-				// fileWriter.mergeAfterReview(CDT_REPORT_OUT_DIR2);
+				fileWriter.mergeAfterReview(CDT_REPORT_OUT_DIR2);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
